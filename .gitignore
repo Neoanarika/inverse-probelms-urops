@@ -1,2 +1,7 @@
 kaggle/
 data/
+kaggle.json
+__pycache__/*.cpython-37.pyc
+models/mnist/__pycache__/*.pyc
+models/__pycache__/*.pyc
+utils/__pycache__/*.cpython-37.pyc
