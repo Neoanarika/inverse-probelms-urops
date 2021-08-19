@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
-from typing import Optional
 
 def cross_entropy_with_kl(config, model, x, x_hat, z, mu, logvar):
     # This is the loss function for vae
