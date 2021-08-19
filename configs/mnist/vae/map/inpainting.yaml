@@ -1,0 +1,26 @@
+exp_params:
+  # basic info
+  dataset: "mnist"
+  data_path: "data"
+  checkpoint_path: "checkpoints"
+  # model definiton
+  base_model: "vae"
+  operator: "CenterOcclude"
+  estimator: "map"
+  # dataset information
+  batch_size: 1 # Better to have a square number
+  image_shape: 
+    - 1
+    - 32
+    - 32
+
+operator_params:
+  size: 13
+
+estimator_params:
+  burn_in: 0
+  n_samples: 15
+  step_size: 0.01
+
+base_model_params:
+  model_name: "mnist/vae/vanilla"
