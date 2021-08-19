@@ -6,15 +6,19 @@ import numpy as np
 # 3-dim shape corresponding to n_samples, batch, num
 # This can help us debug future sampling algorithm
 
+def score_fn(potential, Zi):
+    Zi.requires_grad_()
+    u = potential(Zi).mean()
+    grad = torch.autograd.grad(u, Zi)[0]
+    return grad 
+
 def map(config, potential, Zi):
     n = config["estimator_params"]["n"]
     step_size = config["estimator_params"]["step_size"]
     samples = torch.zeros((1, ) + Zi.shape)
 
     for idx in range(n):
-        Zi.requires_grad_()
-        u = potential(Zi).mean()
-        grad = torch.autograd.grad(u, Zi)[0]
+        grad = score_fn(potential, Zi)
         Zi = Zi.detach() - step_size * grad 
     samples[0] = Zi
     return samples 
@@ -26,13 +30,11 @@ def langevin(config, potential, Zi):
     samples = torch.zeros((n_samples, ) + Zi.shape)
 
     for idx in range(n_samples + burn_in):
-        Zi.requires_grad_()
-        u = potential(Zi).mean()
-        grad = torch.autograd.grad(u, Zi)[0]
+        grad = score_fn(potential, Zi)
         Zi = Zi.detach() - step_size * grad  + \
         np.sqrt(2 * step_size) * torch.randn_like(Zi)
         if idx > burn_in:
-            samples[idx] = Zi
+            samples[idx-burn_in] = Zi
     return samples 
 
 def log_Q(z_prime, z, potential, step):
@@ -47,9 +49,7 @@ def mala(config, potential, Zi):
     samples = torch.zeros((n_samples, ) + Zi.shape)
 
     for idx in range(n_samples + burn_in):
-        Zi.requires_grad_()
-        u = potential(Zi).mean()
-        grad = torch.autograd.grad(u, Zi)[0]
+        grad = score_fn(potential, Zi)
         Znew = Zi.detach() - step * grad + np.sqrt(2 * step) * torch.randn(1, 2) 
         u = np.random.uniform()
         alpha = min(1, torch.exp(potential(Zi-potential(Znew)\
@@ -57,7 +57,7 @@ def mala(config, potential, Zi):
         if u< alpha:
           Zi = Znew
         if idx > burn_in:
-            samples[idx] = Zi
+            samples[idx-burn_in] = Zi
     return samples 
 
 def hmc(config, potential, Zi):
@@ -68,9 +68,7 @@ def hmc(config, potential, Zi):
     samples = torch.zeros((n_samples, ) + Zi.shape)
 
     for idx in range(n_samples + burn_in):
-        Zi.requires_grad_()
-        u = potential(Zi).mean()
-        grad = torch.autograd.grad(u, Zi)[0]
+        grad = score_fn(potential, Zi)
         velocity = torch.randn(1, 2)
         velocity_new = velocity - 0.5 * step*grad 
         Znew = Zi.detach() + step*velocity_new 
@@ -90,7 +88,7 @@ def hmc(config, potential, Zi):
           Zi = Znew
           velocity=velocity_new
         if idx > burn_in:
-            samples[idx] = Zi
+            samples[idx-burn_in] = Zi
     
     return samples 
 
@@ -107,12 +105,10 @@ def annealed_langevin_algorithm(config, potential, Zi):
     for i in range(L):
       alpha_i  = eps*var[i]/var[-1]
       for _ in range(T):
-        Zi.requires_grad_()
-        u = potential(Zi).mean()
-        grad = torch.autograd.grad(u, Zi)[0]
+        grad = score_fn(potential, Zi)
         Zi = Zi.detach() - (alpha_i/2) * grad + np.sqrt(alpha_i) * torch.randn(1, 2)
         if idx > burn_in:
-            samples[idx] = Zi
+            samples[idx-burn_in] = Zi
         idx+=1
 
     return samples
