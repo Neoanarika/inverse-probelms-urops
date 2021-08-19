@@ -1,8 +1,9 @@
 import torch
 from einops import reduce
 from abc import ABC, abstractmethod
-from pytorch_lightning import LightningModule
 from torch.nn import functional as F
+from src.sampling import score_fn
+from pytorch_lightning import LightningModule
 from utils.config import get_config_hash, get_config_base_model
 
 class BaseModel(ABC):
@@ -203,25 +204,25 @@ class EBMModule(LightningModule):
         def potential(z):
             return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum')
         
-        def get_avg_estimate(z):
+        def get_avg_estimator(z):
             sampler = lambda z : self.sampling_algo(self.config, potential, z)
             samples = sampler(z)
             return reduce(samples, "nsamples batch latent_dim -> batch latent_dim", "mean")
         
-        def get_last_estimate(z):
+        def get_last_estimator(z):
             sampler = lambda z : self.sampling_algo(self.config, potential, z)
             samples = sampler(z)
             return samples[-1]
         
-        def get_denoise_avg_estimate(z):
-            z = get_avg_estimate(z)
+        def get_denoise_avg_estimator(z):
+            z = get_avg_estimator(z)
+            return z - self.config["estimator_params"]["denoise_step_size"] * score_fn(potential, z)
 
-
-        z = self.get_posterior_inital_latent_vector(y)
-        z = get_avg_estimate(z)
+        z = eval(f"self.get_{self.config['estimator_params']['initalisation']}_inital_latent_vector(y)")
+        z = eval(f"get_{self.config['estimator_params']['mode']}_estimator(z)")
         return z
 
-    def get_inital_latent_vector(self, x):
+    def get_random_inital_latent_vector(self, x):
         z = self.model.get_random_latent(x.shape[0])
         return z
     
