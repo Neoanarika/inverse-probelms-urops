@@ -48,6 +48,9 @@ def make_and_load_base_models(model_names: list, use_gpu=False):
     vaes.append(vae)
   return vaes 
 
+def make_gans(config, dataset_name, mode):
+    pass 
+
 def make_vaes(config, dataset_name, mode):
     # Get model components 
     base_model = config["exp_params"]["model_name"]
