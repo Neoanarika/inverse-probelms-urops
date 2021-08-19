@@ -2,7 +2,7 @@ import torch
 from einops import reduce
 from abc import ABC, abstractmethod
 from torch.nn import functional as F
-from src.sampling import score_fn
+from src.sampling import score_fn, map
 from pytorch_lightning import LightningModule
 from utils.config import get_config_hash, get_config_base_model
 
@@ -230,6 +230,17 @@ class EBMModule(LightningModule):
         z = self.model.encode(x)
         return z
     
+    def get_map_estimate_inital_latent_vector(self, x):
+        def potential(z):
+            return F.mse_loss(self.operator(self.model.decode(z)), x, reduction='sum')
+        z = self.get_random_inital_latent_vector(x)
+        n = self.config["estimator_params"]["num_steps_map_initaliser"]
+        step_size = self.config["estimator_params"]["step_size_map_initaliser"]
+        for _ in range(n):
+            grad = score_fn(potential, z)
+            z = z.detach() - step_size * grad 
+        return z
+
     def get_estimates(self, y):
         y = y.to(self.device)
         self.model = self.model.to(self.device)
