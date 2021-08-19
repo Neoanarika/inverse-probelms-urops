@@ -14,6 +14,7 @@ exp_params:
   model_name: 'vanilla_vae'
   dataset: celeba
   data_path: "kaggle"
+  checkpoint_path: "checkpoints"
   img_size: 64
   crop_size: 128
   batch_size: 256 # Better to have a square number
