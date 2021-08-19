@@ -2,16 +2,38 @@
 
 import torch
 import torch.nn as nn
+import numpy as np
 import torch.nn.functional as F
 from typing import Optional
 
-def kl_divergence(mean, logvar):
-  return -0.5 * torch.mean(1 + logvar - torch.square(mean) - torch.exp(logvar))
+def mse_with_kl(config, model, x, x_hat, z, mu, logvar):
+    # This is the loss function for vae
+    recons_loss = F.mse_loss(x_hat, x, reduction='mean')
 
-def loss(config, x, x_hat, z, mu, logvar):
-  loss = F.mse_loss(x_hat, x, reduction='mean')
+    kld_loss = model.kl_divergence(mu, logvar, "mean")
 
-  return loss 
+    loss = recons_loss + config["loss_params"]["kl_coeff"] * kld_loss
+    return loss 
+
+def softclip(tensor, min):
+    """ Clips the tensor values at the minimum value min in a softway. Taken from Handful of Trials """
+    result_tensor = min + F.softplus(tensor - min)
+
+    return result_tensor
+
+def gaussian_nll(mu, log_sigma, x):
+    return 0.5 * torch.pow((x - mu) / log_sigma.exp(), 2) + log_sigma + 0.5 * np.log(2 * np.pi)
+
+def guassian_nll_with_kl(config, model, x, x_hat, z, mu, logvar):
+    # This is the loss function for sigma VAE
+    log_sigma = torch.tensor(((x - x_hat) ** 2).mean([0,1,2,3], keepdim=True).sqrt().log())
+    log_sigma = softclip(log_sigma, -6)
+    recons_loss = gaussian_nll(x_hat, log_sigma, x).mean()
+
+    kld_loss = model.kl_divergence(mu, logvar, "mean")
+
+    loss = recons_loss + config["kl_coeff"] * kld_loss
+    return loss 
 
 class Encoder(nn.Module):
 
