@@ -2,6 +2,14 @@ import yaml
 import pickle
 import hashlib 
 
+def show(config):
+    for item in config:
+        if item != "exp_params":
+            print(item)
+            for key, val in config[item].items():
+                print(f"    {key}: {val}")
+
+
 def get_config_base_model(fpath):
    with open(fpath, 'r') as file:
       try:
