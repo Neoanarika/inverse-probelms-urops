@@ -7,7 +7,7 @@ decoder_params:
   hidden_dims: null
 
 loss_params:
-  loss_type: "guassian_nll_with_kl"
+  loss_type: "cross_entropy_with_kl"
   kl_coeff: 0.1
 
 exp_params:
