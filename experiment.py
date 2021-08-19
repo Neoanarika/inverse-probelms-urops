@@ -240,6 +240,12 @@ class EBMModule(LightningModule):
             grad = score_fn(potential, z)
             z = z.detach() - step_size * grad 
         return z
+    
+    def get_map_posterior_inital_latent_vector(self, x):
+        z_hat = self.get_map_estimate_inital_latent_vector(x)
+        x_hat = self.model.decode(z_hat)
+        z = self.get_posterior_inital_latent_vector(x_hat)
+        return z
 
     def get_estimates(self, y):
         y = y.to(self.device)
