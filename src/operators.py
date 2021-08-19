@@ -26,5 +26,4 @@ class CenterOcclude(nn.Module):
             A = F.pad(A, (pad_size_x, pad_size_x+1, pad_size_y, pad_size_y+1), "constant", 1)
         else:
             A = F.pad(A, (pad_size_x, pad_size_x, pad_size_y, pad_size_y), "constant", 1)
-        print(A.shape)
         return A
