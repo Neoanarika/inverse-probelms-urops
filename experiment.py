@@ -41,6 +41,63 @@ class BaseVAE(BaseModel):
         self.model = self.model.to(device)
         return self
 
+class BaseGAN(BaseModel):
+
+    def __init__(self, gan):
+        self.model = gan
+    
+    def decode(self, z):
+        return self.model(z)
+    
+    def encode(self, x):
+        raise "GANs cannot encode images into the latent space"
+
+    def get_random_latent(self, num):
+        return self.model.model.get_noise(num)
+    
+    def to(self, device):
+        self.model = self.model.to(device)
+        return self
+
+class GANModule(LightningModule):
+
+    def __init__(
+            self,
+            config, 
+            model
+    ):
+        self.model = model
+        self.config = config
+        self.lr = config["exp_params"]["LR"]
+        self.beta1 = config["exp_params"]["beta1"]
+        self.dataset = config["exp_params"]["dataset"]
+        self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
+    
+    def forward(self, z):
+        z = z.to(self.device)
+        return self.model(z)
+    
+    def configure_optimizers(self):
+        lr = self.lr
+        betas = (self.beta1, 0.999)
+        opt_disc = torch.optim.Adam(self.model.discriminator.parameters(), lr=lr, betas=betas)
+        opt_gen = torch.optim.Adam(self.model.generator.parameters(), lr=lr, betas=betas)
+        return [opt_disc, opt_gen], []
+
+    def training_step(self, batch, batch_idx, optimizer_idx):
+        real, _ = batch
+
+        # Train discriminator
+        result = None
+        if optimizer_idx == 0:
+            result = self._disc_step(real)
+
+        # Train generator
+        if optimizer_idx == 1:
+            result = self._gen_step(real)
+
+        return result
+
 class VAEModule(LightningModule):
     """
     Standard lightning training code.
