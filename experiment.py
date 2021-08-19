@@ -1,8 +1,45 @@
 import torch
-import warnings
+from einops import reduce
+from abc import ABC, abstractmethod
 from pytorch_lightning import LightningModule
 from torch.nn import functional as F
+from utils.config import get_config_hash, get_config_base_model
 
+class BaseModel(ABC):
+
+    @abstractmethod
+    def to(self):
+        pass
+
+    @abstractmethod
+    def encode(self):
+        pass
+
+    @abstractmethod
+    def decode(self):
+        pass
+    
+    @abstractmethod
+    def get_random_latent(self):
+        pass
+
+class BaseVAE(BaseModel):
+
+    def __init__(self, vae):
+        self.model = vae
+    
+    def decode(self, z):
+        return self.model.decode(z)
+    
+    def encode(self, x):
+        return self.model.det_encode(x)
+
+    def get_random_latent(self, num):
+        return self.model.model.get_random_latent(num)
+    
+    def to(self, device):
+        self.model = self.model.to(device)
+        return self
 
 class VAEModule(LightningModule):
     """
@@ -11,15 +48,17 @@ class VAEModule(LightningModule):
 
     def __init__(
             self,
-            model,
-            lr: float = 1e-3,
+            config, 
+            model
     ):
 
         super(VAEModule, self).__init__()
 
-        self.lr = lr
         self.model = model
-        self.model_name = model.name
+        self.config = config
+        self.lr = config["exp_params"]["LR"]
+        self.dataset = config["exp_params"]["dataset"]
+        self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
 
     def forward(self, x):
         x = x.to(self.device)
@@ -40,7 +79,7 @@ class VAEModule(LightningModule):
         return self.model.decoder(z)
 
     def get_samples(self, num):
-        return self.model.get_samples(num)
+        return self.model.get_samples(num, self.device)
 
     def step(self, batch, batch_idx):
         x, y = batch
@@ -67,6 +106,76 @@ class VAEModule(LightningModule):
 
     def load_model(self):
         try:
-            self.load_state_dict(torch.load(f"{self.model.name}_celeba_conv.ckpt"))
+            config = get_config_base_model(self.config['exp_params']['file_path'])
+            hash = get_config_hash(config)
+            self.load_state_dict(torch.load(f"./{self.checkpoint_dir}/{hash}.ckpt"))
         except  FileNotFoundError:
-            print(f"Please train the model using python run.py -c ./configs/{self.model.name}.yaml")
+            print(f"Please train the model using python run.py -c {self.config['exp_params']['file_path']}")
+
+class EBMModule(LightningModule):
+    """
+    Standard lightning training code.
+    """
+
+    def __init__(
+            self,
+            config, 
+            base_model,
+            operator,
+            sampling_algo
+    ):
+
+        super(EBMModule, self).__init__()
+        
+        self.config = config
+        self.model = base_model
+        self.operator = operator
+        self.sampling_algo = sampling_algo
+        self.dataset = config["exp_params"]["dataset"]
+        self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
+
+    def forward(self, y):
+        y = y.to(self.device)
+        self.model = self.model.to(self.device)
+        self.operator = self.operator.to(self.device)
+        z = self.get_latent_estimate(y)
+        imgs = self.model.decode(z)
+        return imgs
+
+    def get_latent_estimate(self, y):
+        def potential(z):
+            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum')
+        
+        def get_avg_estimate(z):
+            sampler = lambda z : self.sampling_algo(self.config, potential, z)
+            samples = sampler(z)
+            return reduce(samples, "nsamples batch latent_dim -> batch latent_dim", "mean")
+        
+        def get_last_estimate(z):
+            sampler = lambda z : self.sampling_algo(self.config, potential, z)
+            samples = sampler(z)
+            return samples[-1]
+        
+        def get_denoise_avg_estimate(z):
+            z = get_avg_estimate(z)
+
+
+        z = self.get_posterior_inital_latent_vector(y)
+        z = get_avg_estimate(z)
+        return z
+
+    def get_inital_latent_vector(self, x):
+        z = self.model.get_random_latent(x.shape[0])
+        return z
+    
+    def get_posterior_inital_latent_vector(self, x):
+        z = self.model.encode(x)
+        return z
+    
+    def get_estimates(self, y):
+        y = y.to(self.device)
+        self.model = self.model.to(self.device)
+        self.operator = self.operator.to(self.device)
+        z = self.get_latent_estimate(y)
+        imgs = self.model.decode(z)
+        return z, imgs
