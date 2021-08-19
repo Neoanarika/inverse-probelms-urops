@@ -45,7 +45,8 @@ class Encoder(nn.Module):
     x = self.encoder(x)
     x = torch.flatten(x, start_dim=1)
     mu = self.fc_mu(x)
-    return mu, torch.zeros_like(mu)
+    log_var = self.fc_var(x)
+    return mu, log_var
 
 class Decoder(nn.Module):
 
