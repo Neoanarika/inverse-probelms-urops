@@ -8,6 +8,8 @@ def get_base_model(config, dataset, mode):
     model_type = config["exp_params"]["base_model"]
     if model_type == "vae":
         model = make_vaes(config, dataset, mode)
+    elif model_type == "gan":
+        model = make_gans(config, dataset, mode)
     return model
 
 def make_model(model_name):
