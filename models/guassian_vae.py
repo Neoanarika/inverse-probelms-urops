@@ -54,5 +54,6 @@ class VAE(LightningModule):
         z = self.get_random_latent(num)
         return self.decoder(z)
 
-    def kl_divergence(self, mean, logvar):
-        return -0.5 * torch.sum(1 + logvar - torch.square(mean) - torch.exp(logvar))
+    def kl_divergence(self, mean, logvar, reduction="mean"):
+        fn = getattr(torch, reduction)
+        return -0.5 * fn(1 + logvar - torch.square(mean) - torch.exp(logvar))
