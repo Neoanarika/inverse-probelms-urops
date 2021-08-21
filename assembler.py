@@ -1,18 +1,36 @@
 import os 
+import unittest
 import importlib
 from functools import partial
 from utils.config import get_config_base_model, get_config_ebm
-from experiment import VAEModule, EBMModule, BaseVAE
+from experiment import GANModule, VAEModule, EBMModule, BaseVAE
 
-def get_base_model(config, dataset, mode):
-    model_type = config["exp_params"]["base_model"]
+class TestMake(unittest.TestCase):
+
+    def test_make_vae(self):
+        # Quick test VAEs we make
+        model_name = "mnist/vae/vanilla"
+        make_and_load_base_model(model_name, use_gpu=False)
+
+    def test_make_gan(self):
+        # Quick test VAEs we make
+        model_name = "mnist/gan/dcgan"
+        make_and_load_base_model(model_name, use_gpu=False)
+    
+    def test_make_ebm(self):
+        # Quick test VAEs we make
+        model_name = "mnist/vae/langevin/inpainting"
+        make_ebm_model(model_name)
+
+def get_base_model(base_model_config, dataset, mode):
+    model_type = base_model_config["exp_params"]["base_model"]
     if model_type == "vae":
-        model = make_vaes(config, dataset, mode)
+        model = make_vaes(base_model_config, dataset, mode)
     elif model_type == "gan":
-        model = make_gans(config, dataset, mode)
+        model = make_gans(base_model_config, dataset, mode)
     return model
 
-def make_model(model_name):
+def make_ebm_model(model_name):
     dataset, model, sampling, task = model_name.split("/")
     name = f"{sampling}/{task}"
     config = get_config(get_config_ebm, dataset, model, name)
@@ -51,7 +69,32 @@ def make_and_load_base_models(model_names: list, use_gpu=False):
   return vaes 
 
 def make_gans(config, dataset_name, mode):
-    pass 
+    # Get model components 
+    base_model = config["exp_params"]["model_name"]
+    components = importlib.import_module(f"models.{dataset_name}.gan")
+    
+    # Get component constructors
+    discriminator_used = config["discriminator_params"]["discriminator_type"]
+    generator_used = config["generator_params"]["generator_type"]
+    loss_used = config["loss_params"]["loss_type"]
+
+    discriminator = getattr(components, discriminator_used)
+    generator = getattr(components, generator_used)
+
+    GAN = getattr(importlib.import_module(f"models.{base_model}"), "GAN")
+
+    disc = discriminator(config)
+    gen = generator(config)
+
+    # Assemble my model
+    gan = GAN(base_model, gen, disc)
+    gan = GANModule(config, gan)
+
+    # training vs inference time model
+    if is_mode_training(mode):
+        return gan
+    elif is_mode_inference(mode):
+        return gan
 
 def make_vaes(config, dataset_name, mode):
     # Get model components 
@@ -107,10 +150,4 @@ def make_energy_model(config):
     return ebm 
 
 if __name__ == "__main__":
-    # Quick test VAEs we make
-    model_name = "mnist/vae/vanilla"
-    model = make_and_load_base_model(model_name, use_gpu=False)
-    
-    # Quick make ebms
-    model_name = "mnist/vae/langevin/inpainting"
-    ebm = make_model(model_name)
+    unittest.main()
