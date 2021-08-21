@@ -6,6 +6,15 @@ from src.sampling import score_fn, map
 from pytorch_lightning import LightningModule
 from utils.config import get_config_hash, get_config_base_model
 
+def load_model(self):
+    try:
+        config = get_config_base_model(self.config['exp_params']['file_path'])
+        hash = get_config_hash(config)
+        self.load_state_dict(torch.load(f"./{self.checkpoint_dir}/{hash}.ckpt"))
+    except  FileNotFoundError:
+        print(f"Please train the model using python run.py -c {self.config['exp_params']['file_path']}")
+    return self 
+
 class BaseModel(ABC):
 
     @abstractmethod
@@ -67,10 +76,11 @@ class GANModule(LightningModule):
             config, 
             model
     ):
+        super(GANModule, self).__init__()
         self.model = model
         self.config = config
-        self.lr = config["exp_params"]["LR"]
-        self.beta1 = config["exp_params"]["beta1"]
+        self.lr = config["optimizer_params"]["LR"]
+        self.beta1 = config["optimizer_params"]["beta1"]
         self.dataset = config["exp_params"]["dataset"]
         self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
     
@@ -98,6 +108,9 @@ class GANModule(LightningModule):
             result = self._gen_step(real)
 
         return result
+    
+    def load_model(self):
+        self = load_model(self)
 
 class VAEModule(LightningModule):
     """
@@ -163,12 +176,7 @@ class VAEModule(LightningModule):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
     def load_model(self):
-        try:
-            config = get_config_base_model(self.config['exp_params']['file_path'])
-            hash = get_config_hash(config)
-            self.load_state_dict(torch.load(f"./{self.checkpoint_dir}/{hash}.ckpt"))
-        except  FileNotFoundError:
-            print(f"Please train the model using python run.py -c {self.config['exp_params']['file_path']}")
+        self = load_model(self)
 
 class EBMModule(LightningModule):
     """
