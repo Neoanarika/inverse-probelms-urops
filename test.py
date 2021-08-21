@@ -1,19 +1,23 @@
-from utils.download_mnist import mnist_dataloader_test
-from assembler import get_config, get_config_ebm, make_energy_model
+import torch 
+import unittest
+from models.mnist.gan import DCGANGenerator, DCGANDiscriminator
+from utils.config import get_config_base_model
 
-def get_model_config(model_name):
-    dataset, model, sampling, task = model_name.split("/")
-    name = f"{sampling}/{task}"
-    config = get_config(get_config_ebm, dataset, model, name)
-    return config
+# Unittest
+class TestGAN(unittest.TestCase):
 
-model_name = "mnist/vae/langevin/inpainting"
-config = get_model_config(model_name)
-ebm = make_energy_model(config)
+    def test_dcgan_generator(self):
+        config = get_config_base_model("./configs/mnist/gan/dcgan.yaml")
+        gen = DCGANGenerator(config)
+        noise = torch.randn(1, config["exp_params"]["latent_dim"])
+        noise = noise.view(*noise.shape, 1, 1)
+        gen(noise)
 
-dm = mnist_dataloader_test(config)
+    def test_dcgan_discriminator(self):
+        config = get_config_base_model("./configs/mnist/gan/dcgan.yaml")
+        disc = DCGANDiscriminator(config)
+        img = torch.randn(1, 1, 32, 32)
+        disc(img)
 
-batch = next(iter(dm))
-
-x, y = batch
-ebm(x)
+if __name__ == "__main__":
+    unittest.main()
