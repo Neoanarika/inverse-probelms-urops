@@ -5,6 +5,14 @@ from functools import partial
 from utils.config import get_config_base_model, get_config_ebm
 from experiment import GANModule, VAEModule, EBMModule, BaseVAE
 
+# Helper functions
+def is_mode_training(mode):
+    return mode=="training"
+
+def is_mode_inference(mode):
+    return mode=="inference"
+
+# Unittest
 class TestMake(unittest.TestCase):
 
     def test_make_vae(self):
@@ -13,12 +21,12 @@ class TestMake(unittest.TestCase):
         make_and_load_base_model(model_name, use_gpu=False)
 
     def test_make_gan(self):
-        # Quick test VAEs we make
+        # Quick test GANs we make
         model_name = "mnist/gan/dcgan"
         make_and_load_base_model(model_name, use_gpu=False)
     
     def test_make_ebm(self):
-        # Quick test VAEs we make
+        # Quick test VAEs we make this includes the sampler and operator code
         model_name = "mnist/vae/langevin/inpainting"
         make_ebm_model(model_name)
 
@@ -29,19 +37,6 @@ def get_base_model(base_model_config, dataset, mode):
     elif model_type == "gan":
         model = make_gans(base_model_config, dataset, mode)
     return model
-
-def make_ebm_model(model_name):
-    dataset, model, sampling, task = model_name.split("/")
-    name = f"{sampling}/{task}"
-    config = get_config(get_config_ebm, dataset, model, name)
-    ebm = make_energy_model(config)
-    return ebm
-
-def is_mode_training(mode):
-    return mode=="training"
-
-def is_mode_inference(mode):
-    return mode=="inference"
 
 def get_config(get_config_fn, dataset, model, name):
     if not os.path.isdir('configs'):
@@ -67,6 +62,26 @@ def make_and_load_base_models(model_names: list, use_gpu=False):
     vae = make_and_load_base_model(model_name, use_gpu)
     vaes.append(vae)
   return vaes 
+
+def make_operator(config):
+    operator_type = config["operator_params"]["operator"]
+    operator_library = importlib.import_module(f"src.operators")
+    operator_constructor = getattr(operator_library, operator_type)
+    operator = operator_constructor(config)
+    return operator
+
+def make_estimator(config):
+    estimator_type = config["estimator_params"]["estimator"]
+    estimator_library = importlib.import_module("src.sampling")
+    estimator= getattr(estimator_library, f"{estimator_type}")
+    return estimator
+
+def make_ebm_model(model_name):
+    dataset, model, sampling, task = model_name.split("/")
+    name = f"{sampling}/{task}"
+    config = get_config(get_config_ebm, dataset, model, name)
+    ebm = make_energy_model(config)
+    return ebm
 
 def make_gans(config, dataset_name, mode):
     # Get model components 
@@ -125,19 +140,6 @@ def make_vaes(config, dataset_name, mode):
         return vae 
     elif is_mode_inference(mode):
         return vae
-
-def make_operator(config):
-    operator_type = config["operator_params"]["operator"]
-    operator_library = importlib.import_module(f"src.operators")
-    operator_constructor = getattr(operator_library, operator_type)
-    operator = operator_constructor(config)
-    return operator
-
-def make_estimator(config):
-    estimator_type = config["estimator_params"]["estimator"]
-    estimator_library = importlib.import_module("src.sampling")
-    estimator= getattr(estimator_library, f"{estimator_type}")
-    return estimator
 
 def make_energy_model(config): 
     model_name = config["base_model_params"]["model_name"]
