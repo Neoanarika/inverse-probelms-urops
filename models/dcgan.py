@@ -86,7 +86,7 @@ class GAN(LightningModule):
 
     def get_fake_pred(self, real: Tensor) -> Tensor:
         batch_size = len(real)
-        noise = self.get_noise(batch_size, self.hparams.latent_dim)
+        noise = self.get_noise(batch_size)
         fake = self(noise)
         fake_pred = self.discriminator(fake)
 

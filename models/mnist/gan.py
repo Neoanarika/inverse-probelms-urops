@@ -1,5 +1,6 @@
+import torch
 from torch import nn, Tensor
-from typing import Any
+from utils.config import get_config_base_model
 
 class DCGANGenerator(nn.Module):
 
@@ -71,7 +72,7 @@ class DCGANDiscriminator(nn.Module):
             self._make_disc_block(feature_maps, feature_maps * 2),
             self._make_disc_block(feature_maps * 2, feature_maps * 4),
             self._make_disc_block(feature_maps * 4, feature_maps * 8),
-            self._make_disc_block(feature_maps * 8, 1, kernel_size=4, stride=1, padding=0, last_block=True),
+            self._make_disc_block(feature_maps * 8, 1, kernel_size=2, stride=1, padding=0, last_block=True),
         )
 
     @staticmethod
@@ -101,3 +102,9 @@ class DCGANDiscriminator(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         return self.disc(x).view(-1, 1).squeeze(1)
+
+if __name__ == "__main__":
+    config = get_config_base_model("./configs/mnist/gan/dcgan.yaml")
+    gen = DCGANGenerator(config)
+    noise = torch.randn(1, config["exp_params"]["latent_dim"])
+    print(gen(noise))
