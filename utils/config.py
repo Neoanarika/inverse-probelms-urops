@@ -18,8 +18,6 @@ def get_config_base_model(fpath):
           print(exc)
       
       # Check if config is valid
-      assert "encoder_params" in config
-      assert "decoder_params" in config 
       assert "loss_params" in config
       assert "exp_params" in config
       assert "trainer_params" in config
