@@ -36,7 +36,7 @@ def get_coord(sample, imgshape):
 class RandomOcclude(nn.Module):
 
     def __init__(self, config):
-        super(CenterOcclude, self).__init__()
+        super(RandomOcclude, self).__init__()
 
         num = config["operator_params"]["num_measurements"] 
         batch_size = config["exp_params"]["batch_size"]
