@@ -3,7 +3,7 @@ from torch import nn, Tensor
 from typing import Any, Callable
 from pytorch_lightning import LightningModule
 
-class DCGAN(LightningModule):
+class GAN(LightningModule):
     """
     DCGAN implementation.
     Example::
