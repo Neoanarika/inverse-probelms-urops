@@ -91,15 +91,14 @@ def make_gans(config, dataset_name, mode):
     # Get component constructors
     discriminator_used = config["discriminator_params"]["discriminator_type"]
     generator_used = config["generator_params"]["generator_type"]
-    loss_used = config["loss_params"]["loss_type"]
 
     discriminator = getattr(components, discriminator_used)
     generator = getattr(components, generator_used)
 
     GAN = getattr(importlib.import_module(f"models.{base_model}"), "GAN")
 
-    disc = discriminator(config)
     gen = generator(config)
+    disc = discriminator(config)
 
     # Assemble my model
     gan = GAN(base_model, gen, disc)
