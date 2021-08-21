@@ -3,7 +3,7 @@ from typing import Any
 
 class DCGANGenerator(nn.Module):
 
-    def __init__(self, latent_dim: int, feature_maps: int, image_channels: int) -> None:
+    def __init__(self, config) -> None:
         """
         Args:
             latent_dim: Dimension of the latent space
@@ -11,6 +11,11 @@ class DCGANGenerator(nn.Module):
             image_channels: Number of channels of the images from the dataset
         """
         super().__init__()
+        latent_dim = config["exp_params"]["latent_dim"]
+        feature_maps = config["generator_params"]["feature_maps"]
+        image_channels = config["generator_params"]["image_channels"]
+        
+        self.latent_dim = latent_dim
         self.gen = nn.Sequential(
             self._make_gen_block(latent_dim, feature_maps * 8, kernel_size=4, stride=1, padding=0),
             self._make_gen_block(feature_maps * 8, feature_maps * 4),
@@ -49,13 +54,18 @@ class DCGANGenerator(nn.Module):
 
 class DCGANDiscriminator(nn.Module):
 
-    def __init__(self, feature_maps: int, image_channels: int) -> None:
+    def __init__(self, config) -> None:
         """
         Args:
             feature_maps: Number of feature maps to use
             image_channels: Number of channels of the images from the dataset
         """
         super().__init__()
+        latent_dim = config["exp_params"]["latent_dim"]
+        feature_maps = config["discriminator_params"]["feature_maps"]
+        image_channels = config["discriminator_params"]["image_channels"]
+
+        self.latent_dim = latent_dim
         self.disc = nn.Sequential(
             self._make_disc_block(image_channels, feature_maps, batch_norm=False),
             self._make_disc_block(feature_maps, feature_maps * 2),

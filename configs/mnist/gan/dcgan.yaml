@@ -1,0 +1,50 @@
+discriminator_params:
+  discriminator_type: "DCGANGenerator"
+  feature_maps: 64
+  image_channels: 1
+
+generator_params:
+  generator_type: "DCGANDiscriminator"
+  feature_maps: 64
+  image_channels: 1
+
+loss_params:
+  loss_type: "JS"
+  top_k: True
+  instance_noise: False
+
+optimizer_params:
+  LR: 0.0002
+  beta1: 0.5
+
+exp_params:
+  model_name: "dcgan"
+  base_model: "gan"
+  dataset: celeba
+  data_path: "kaggle"
+  refinement: "dgflow"
+  img_size: 64
+  crop_size: 128
+  latent_dim: 256
+  batch_size: 256 # Better to have a square number
+  checkpoint_path: "checkpoints"
+
+trainer_params:
+  gpus: 1
+  max_epochs: 10
+
+# If top_k is true then we use these hyperparameters
+top_k_params:
+  k: 200
+  gamma: 0.95
+
+# If instance_noise is true then we use these hyperparameters
+instance_noise_params:
+  noise_level: 0.1
+  gamma: 0.99
+
+# Sampling algo if refinement is not null
+sampling_params:
+  eta: 0.01
+  noise_factor: 0.001 
+  num_steps: 50
