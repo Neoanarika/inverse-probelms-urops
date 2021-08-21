@@ -84,14 +84,14 @@ def make_vaes(config, dataset_name, mode):
         return vae
 
 def make_operator(config):
-    operator_type = config["exp_params"]["operator"]
+    operator_type = config["operator_params"]["operator"]
     operator_library = importlib.import_module(f"src.operators")
     operator_constructor = getattr(operator_library, operator_type)
     operator = operator_constructor(config)
     return operator
 
 def make_estimator(config):
-    estimator_type = config["exp_params"]["estimator"]
+    estimator_type = config["estimator_params"]["estimator"]
     estimator_library = importlib.import_module("src.sampling")
     estimator= getattr(estimator_library, f"{estimator_type}")
     return estimator

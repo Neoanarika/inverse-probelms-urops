@@ -41,14 +41,7 @@ def get_config_ebm(fpath):
 
       # Check exp params is valid 
       assert "dataset" in config["exp_params"]
-      assert "base_model" in config["exp_params"]
-      assert "operator" in config["exp_params"]
-      assert "estimator" in config["exp_params"]
-
-      assert type(config["exp_params"]["base_model"]) == str
-      assert type(config["exp_params"]["dataset"]) == str
-      assert type(config["exp_params"]["batch_size"]) == int
-
+      
       return config
 
 def get_config_hash(config):
