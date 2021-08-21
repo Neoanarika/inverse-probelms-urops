@@ -1,4 +1,5 @@
 import torch
+from torch import nn, Tensor
 from einops import reduce
 from abc import ABC, abstractmethod
 from torch.nn import functional as F
@@ -83,7 +84,7 @@ class GANModule(LightningModule):
         self.beta1 = config["optimizer_params"]["beta1"]
         self.dataset = config["exp_params"]["dataset"]
         self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
-    
+
     def forward(self, z):
         z = z.to(self.device)
         return self.model(z)
@@ -101,11 +102,11 @@ class GANModule(LightningModule):
         # Train discriminator
         result = None
         if optimizer_idx == 0:
-            result = self._disc_step(real)
+            result = self.model.disc_step(real)
 
         # Train generator
         if optimizer_idx == 1:
-            result = self._gen_step(real)
+            result = self.model.gen_step(real)
 
         return result
     
