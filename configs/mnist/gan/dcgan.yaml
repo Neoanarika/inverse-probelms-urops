@@ -1,10 +1,10 @@
 discriminator_params:
-  discriminator_type: "DCGANGenerator"
+  discriminator_type: "DCGANDiscriminator"
   feature_maps: 64
   image_channels: 1
 
 generator_params:
-  generator_type: "DCGANDiscriminator"
+  generator_type: "DCGANGenerator"
   feature_maps: 64
   image_channels: 1
 
@@ -20,18 +20,15 @@ optimizer_params:
 exp_params:
   model_name: "dcgan"
   base_model: "gan"
-  dataset: celeba
-  data_path: "kaggle"
-  refinement: "dgflow"
-  img_size: 64
-  crop_size: 128
-  latent_dim: 256
+  dataset: "mnist"
+  data_path: "data"
+  latent_dim: 100
   batch_size: 256 # Better to have a square number
   checkpoint_path: "checkpoints"
 
 trainer_params:
   gpus: 1
-  max_epochs: 10
+  max_epochs: 30
 
 # If top_k is true then we use these hyperparameters
 top_k_params:

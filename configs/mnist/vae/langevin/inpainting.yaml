@@ -23,5 +23,4 @@ estimator_params:
   initalisation: "posterior"
 
 base_model_params:
-  base_model: "vae"
   model_name: "mnist/vae/vanilla"
