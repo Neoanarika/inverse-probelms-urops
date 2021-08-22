@@ -11,7 +11,7 @@ class TestGAN(unittest.TestCase):
         gen = DCGANGenerator(config)
         noise = torch.randn(1, config["exp_params"]["latent_dim"])
         noise = noise.view(*noise.shape, 1, 1)
-        gen(noise)
+        assert gen(noise).shape == (1,  1, 32, 32)
 
     def test_dcgan_discriminator(self):
         config = get_config_base_model("./configs/mnist/gan/dcgan.yaml")

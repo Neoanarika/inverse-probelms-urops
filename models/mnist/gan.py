@@ -18,7 +18,7 @@ class DCGANGenerator(nn.Module):
         
         self.latent_dim = latent_dim
         self.gen = nn.Sequential(
-            self._make_gen_block(latent_dim, feature_maps * 8, kernel_size=4, stride=1, padding=0),
+            self._make_gen_block(latent_dim, feature_maps * 8, kernel_size=2, stride=1, padding=0),
             self._make_gen_block(feature_maps * 8, feature_maps * 4),
             self._make_gen_block(feature_maps * 4, feature_maps * 2),
             self._make_gen_block(feature_maps * 2, feature_maps),

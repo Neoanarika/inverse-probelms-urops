@@ -34,11 +34,13 @@ def get_base_model(base_model_config, dataset, mode):
     model_type = base_model_config["exp_params"]["base_model"]
     if model_type == "vae":
         model = make_vaes(base_model_config, dataset, mode)
-        model = BaseVAE(model)
+        if is_mode_inference(mode):
+            model = BaseVAE(model)
     elif model_type == "gan":
         print("make_gans")
         model = make_gans(base_model_config, dataset, mode)
-        model = BaseGAN(model)
+        if is_mode_inference(mode):
+            model = BaseGAN(model)
     return model
 
 def get_config(get_config_fn, dataset, model, name):
@@ -107,11 +109,7 @@ def make_gans(config, dataset_name, mode):
     gan = GAN(base_model, gen, disc)
     gan = GANModule(config, gan)
 
-    # training vs inference time model
-    if is_mode_training(mode):
-        return gan
-    elif is_mode_inference(mode):
-        return gan
+    return gan
 
 def make_vaes(config, dataset_name, mode):
     # Get model components 
@@ -137,11 +135,7 @@ def make_vaes(config, dataset_name, mode):
     vae = VAE(base_model, loss, encoder, decoder)
     vae = VAEModule(config, vae)
 
-    # training vs inference time model
-    if is_mode_training(mode):
-        return vae 
-    elif is_mode_inference(mode):
-        return vae
+    return vae
 
 def make_energy_model(config): 
     model_name = config["base_model_params"]["model_name"]
