@@ -1,9 +1,8 @@
 import torch
-from torch import nn, Tensor
 from einops import reduce
 from abc import ABC, abstractmethod
 from torch.nn import functional as F
-from src.sampling import score_fn, map
+from src.sampling import score_fn
 from pytorch_lightning import LightningModule
 from utils.config import get_config_hash, get_config_base_model
 
@@ -17,7 +16,7 @@ def load_model(self):
     return self 
 
 class MethodNotAvaliable(Exception):
-    """Still an exception raised when uncommon things happen"""
+    """Exception handling for when method of a class is not avaliable"""
     def __init__(self, message, payload=None):
         self.message = message
         self.payload = payload # you could add more args

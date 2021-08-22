@@ -145,6 +145,7 @@ def make_vaes(config, dataset_name, mode):
 
 def make_energy_model(config): 
     model_name = config["base_model_params"]["model_name"]
+    
     vae = make_and_load_base_model(model_name)
     A = make_operator(config)
     sampling_algo = make_estimator(config)
