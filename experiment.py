@@ -16,10 +16,22 @@ def load_model(self):
         print(f"Please train the model using python run.py -c {self.config['exp_params']['file_path']}")
     return self 
 
+class MethodNotAvaliable(Exception):
+    """Still an exception raised when uncommon things happen"""
+    def __init__(self, message, payload=None):
+        self.message = message
+        self.payload = payload # you could add more args
+    def __str__(self):
+        return str(self.message) # __str__() obviously expects a string to be returned, so make sure not to send any other data types
+
 class BaseModel(ABC):
 
     @abstractmethod
     def to(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
         pass
 
     @abstractmethod
@@ -51,6 +63,9 @@ class BaseVAE(BaseModel):
     def to(self, device):
         self.model = self.model.to(device)
         return self
+    
+    def load_model(self):
+        self.model.load_model()
 
 class BaseGAN(BaseModel):
 
@@ -61,7 +76,7 @@ class BaseGAN(BaseModel):
         return self.model(z)
     
     def encode(self, x):
-        raise "GANs cannot encode images into the latent space"
+        raise MethodNotAvaliable("GANs cannot encode images into the latent space")
 
     def get_random_latent(self, num):
         return self.model.model.get_noise(num)
@@ -69,6 +84,9 @@ class BaseGAN(BaseModel):
     def to(self, device):
         self.model = self.model.to(device)
         return self
+    
+    def load_model(self):
+        self.model.load_model()
 
 class GANModule(LightningModule):
 
