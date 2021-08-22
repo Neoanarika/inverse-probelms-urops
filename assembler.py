@@ -3,7 +3,7 @@ import unittest
 import importlib
 from functools import partial
 from utils.config import get_config_base_model, get_config_ebm
-from experiment import GANModule, VAEModule, EBMModule, BaseVAE
+from experiment import GANModule, VAEModule, EBMModule, BaseVAE, BaseGAN
 
 # Helper functions
 def is_mode_training(mode):
@@ -34,8 +34,11 @@ def get_base_model(base_model_config, dataset, mode):
     model_type = base_model_config["exp_params"]["base_model"]
     if model_type == "vae":
         model = make_vaes(base_model_config, dataset, mode)
+        model = BaseVAE(model)
     elif model_type == "gan":
+        print("make_gans")
         model = make_gans(base_model_config, dataset, mode)
+        model = BaseGAN(model)
     return model
 
 def get_config(get_config_fn, dataset, model, name):
@@ -145,8 +148,7 @@ def make_energy_model(config):
     vae = make_and_load_base_model(model_name)
     A = make_operator(config)
     sampling_algo = make_estimator(config)
-    
-    vae = BaseVAE(vae)
+
     ebm = EBMModule(config, vae, A, sampling_algo)
     return ebm 
 
