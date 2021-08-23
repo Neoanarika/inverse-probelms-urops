@@ -1,6 +1,5 @@
 import torch
 from einops import reduce
-from abc import ABC, abstractmethod
 from torch.nn import functional as F
 from src.sampling import score_fn
 from pytorch_lightning import LightningModule
@@ -23,31 +22,10 @@ class MethodNotAvaliable(Exception):
     def __str__(self):
         return str(self.message) # __str__() obviously expects a string to be returned, so make sure not to send any other data types
 
-class BaseModel(ABC):
-
-    @abstractmethod
-    def to(self):
-        pass
-
-    @abstractmethod
-    def load_model(self):
-        pass
-
-    @abstractmethod
-    def encode(self):
-        pass
-
-    @abstractmethod
-    def decode(self):
-        pass
-    
-    @abstractmethod
-    def get_random_latent(self):
-        pass
-
-class BaseVAE(BaseModel):
+class BaseVAE(LightningModule):
 
     def __init__(self, vae):
+        super(BaseVAE, self).__init__()
         self.model = vae
     
     def decode(self, z):
@@ -61,15 +39,23 @@ class BaseVAE(BaseModel):
     
     def to(self, device):
         self.model = self.model.to(device)
+        self.model.model = self.model.model.to(device)
         return self
     
     def load_model(self):
         self.model.load_model()
+    
+    def forward(self):
+        pass
 
-class BaseGAN(BaseModel):
+class BaseGAN(LightningModule):
 
     def __init__(self, gan):
+        super(BaseGAN, self).__init__()
         self.model = gan
+    
+    def forward(self):
+        pass
     
     def decode(self, z):
         return self.model(z)
@@ -82,6 +68,7 @@ class BaseGAN(BaseModel):
     
     def to(self, device):
         self.model = self.model.to(device)
+        self.model.model = self.model.model.to(device)
         return self
     
     def load_model(self):
@@ -103,7 +90,6 @@ class GANModule(LightningModule):
         self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
 
     def forward(self, z):
-        z = z.to(self.device)
         return self.model(z)
     
     def configure_optimizers(self):
@@ -150,16 +136,13 @@ class VAEModule(LightningModule):
         self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
 
     def forward(self, x):
-        x = x.to(self.device)
         return self.model(x)
 
     def det_encode(self, x):
-        x = x.to(self.device)
         mu, _ = self.model.encoder(x)
         return mu
 
     def stoch_encode(self, x):
-        x = x.to(self.device)
         mu, log_var = self.model.encoder(x)
         z = self.model.sample(mu, log_var)
         return z
@@ -221,9 +204,6 @@ class EBMModule(LightningModule):
         self.checkpoint_dir = config["exp_params"]["checkpoint_path"]
 
     def forward(self, y):
-        y = y.to(self.device)
-        self.model = self.model.to(self.device)
-        self.operator = self.operator.to(self.device)
         z = self.get_latent_estimate(y)
         imgs = self.model.decode(z)
         return imgs
@@ -246,13 +226,13 @@ class EBMModule(LightningModule):
 
         def get_avg_estimator(z):
             potential = get_potential()
-            sampler = lambda z : self.sampling_algo(self.config, potential, z)
+            sampler = lambda z : self.sampling_algo(self.config, potential, z, device=self.device)
             samples = sampler(z)
             return reduce(samples, "nsamples batch latent_dim -> batch latent_dim", "mean")
         
         def get_last_estimator(z):
             potential = get_potential()
-            sampler = lambda z : self.sampling_algo(self.config, potential, z)
+            sampler = lambda z : self.sampling_algo(self.config, potential, z, device=self.device)
             samples = sampler(z)
             return samples[-1]
         
@@ -291,9 +271,6 @@ class EBMModule(LightningModule):
         return z
 
     def get_estimates(self, y):
-        y = y.to(self.device)
-        self.model = self.model.to(self.device)
-        self.operator = self.operator.to(self.device)
         z = self.get_latent_estimate(y)
         imgs = self.model.decode(z)
         return z, imgs

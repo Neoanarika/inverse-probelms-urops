@@ -12,10 +12,10 @@ def score_fn(potential, Zi):
     grad = torch.autograd.grad(u, Zi)[0]
     return grad 
 
-def map(config, potential, Zi):
+def map(config, potential, Zi, device):
     n = config["estimator_params"]["n"]
     step_size = config["estimator_params"]["step_size"]
-    samples = torch.zeros((1, ) + Zi.shape)
+    samples = torch.zeros((1, ) + Zi.shape, device=device)
 
     for idx in range(n):
         grad = score_fn(potential, Zi)
@@ -23,11 +23,11 @@ def map(config, potential, Zi):
     samples[0] = Zi
     return samples 
 
-def langevin(config, potential, Zi):
+def langevin(config, potential, Zi, device):
     burn_in = config["estimator_params"]["burn_in"]
     n_samples = config["estimator_params"]["n_samples"]
     step_size = config["estimator_params"]["step_size"]
-    samples = torch.zeros((n_samples, ) + Zi.shape)
+    samples = torch.zeros((n_samples, ) + Zi.shape, device=device)
 
     for idx in range(n_samples + burn_in):
         grad = score_fn(potential, Zi)
@@ -42,11 +42,11 @@ def log_Q(z_prime, z, potential, step):
     grad = torch.autograd.grad(potential(z).mean(), z)[0]
     return -(torch.norm(z_prime - z + step * grad, p=2, dim=1) ** 2) / (4 * step)
 
-def mala(config, potential, Zi):
+def mala(config, potential, Zi, device):
     burn_in = config["estimator_params"]["burn_in"]
     n_samples = config["estimator_params"]["n_samples"]
     step = config["estimator_params"]["step_size"]
-    samples = torch.zeros((n_samples, ) + Zi.shape)
+    samples = torch.zeros((n_samples, ) + Zi.shape, device=device)
 
     for idx in range(n_samples + burn_in):
         grad = score_fn(potential, Zi)
@@ -60,12 +60,12 @@ def mala(config, potential, Zi):
             samples[idx-burn_in] = Zi
     return samples 
 
-def hmc(config, potential, Zi):
+def hmc(config, potential, Zi, device):
     burn_in = config["estimator_params"]["burn_in"]
     L = config["estimator_params"]["L"]
     n_samples = config["estimator_params"]["n_samples"]
     step = config["estimator_params"]["step_size"]
-    samples = torch.zeros((n_samples, ) + Zi.shape)
+    samples = torch.zeros((n_samples, ) + Zi.shape, device=device)
 
     for idx in range(n_samples + burn_in):
         grad = score_fn(potential, Zi)
@@ -92,7 +92,7 @@ def hmc(config, potential, Zi):
     
     return samples 
 
-def annealed_langevin_algorithm(config, potential, Zi):
+def annealed_langevin_algorithm(config, potential, Zi, device):
     burn_in = config["estimator_params"]["burn_in"]
     L = config["estimator_params"]["L"]
     T = config["estimator_params"]["T"]
@@ -100,7 +100,7 @@ def annealed_langevin_algorithm(config, potential, Zi):
     eps = config["estimator_params"]["step_size"]
 
     idx = 0
-    samples = torch.zeros((L*T-burn_in, ) + Zi.shape)
+    samples = torch.zeros((L*T-burn_in, ) + Zi.shape, device=device)
 
     for i in range(L):
       alpha_i  = eps*var[i]/var[-1]
