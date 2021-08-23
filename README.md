@@ -24,4 +24,10 @@ Functions that are currently supported
 
 ## estimator_params 
 Functions that are currently supported, these are the path to config files
+- potential: mse/discriminator_weighted
+- initalisation: random/posterior/map_posterior
+- estimator: langevin/hmc/map/mala
+
+## base_model_params 
+Functions that are currently supported, these are the path to config files
 - model_name: mnist/gan/dcgan or mnist/vae/vanilla
