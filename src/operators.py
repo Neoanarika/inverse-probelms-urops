@@ -65,7 +65,6 @@ class CompressedSensing(nn.Module):
         super(CompressedSensing, self).__init__()
 
         num = config["operator_params"]["num_measurements"] 
-        batch_size = config["exp_params"]["batch_size"]
         image_shape = config["exp_params"]["image_shape"]
         self.A = nn.Linear(image_shape[-1]*image_shape[-2], num, bias=False)
         torch.nn.init.normal_(self.A.weight, 0.0, 1/num)
