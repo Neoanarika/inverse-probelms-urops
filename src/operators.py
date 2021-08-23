@@ -1,7 +1,9 @@
 import torch 
 import numpy as np
 from torch import nn
+from einops.einops import rearrange
 from torch.nn import functional as F
+
 
 class CenterOcclude(nn.Module):
 
@@ -56,3 +58,18 @@ class RandomOcclude(nn.Module):
             x, y = get_coord(sample, image_shape)
             A[:, :, x, y] = 1
         return A
+
+class CompressedSensing(nn.Module):
+
+    def __init__(self, config):
+        super(CompressedSensing, self).__init__()
+
+        num = config["operator_params"]["num_measurements"] 
+        batch_size = config["exp_params"]["batch_size"]
+        image_shape = config["exp_params"]["image_shape"]
+        self.A = nn.Linear(image_shape[-1]*image_shape[-2], num, bias=False)
+        torch.nn.init.normal_(self.A.weight, 0.0, 1/num)
+
+    def forward(self, x):
+        x = rearrange(x, "b c h w -> b (c h w)")
+        return self.A(x)
