@@ -12,9 +12,8 @@ class CenterOcclude(LightningModule):
         super(CenterOcclude, self).__init__()
 
         size = config["operator_params"]["size"] 
-        batch_size = config["exp_params"]["batch_size"]
         image_shape = config["exp_params"]["image_shape"]
-        self.A = self.occlude(size, [batch_size] + image_shape)
+        self.A = self.occlude(size, [1] + image_shape)
     
     def forward(self, x):
         x = x.to(self.device)
@@ -45,9 +44,8 @@ class RandomOcclude(LightningModule):
         super(RandomOcclude, self).__init__()
 
         num = config["operator_params"]["num_measurements"] 
-        batch_size = config["exp_params"]["batch_size"]
         image_shape = config["exp_params"]["image_shape"]
-        self.A = self.occlude(num, [batch_size] + image_shape)
+        self.A = self.occlude(num, [1] + image_shape)
     
     def forward(self, x):
         x = x.to(self.device)
