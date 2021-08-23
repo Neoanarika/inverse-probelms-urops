@@ -208,6 +208,9 @@ class EBMModule(LightningModule):
         imgs = self.model.decode(z)
         return imgs
 
+    def use_gpu_for_discriminator(self):
+        self.kwargs["discriminator"] = self.kwargs["discriminator"].to(self.device)
+    
     def get_latent_estimate(self, y):
         def mse_potential(z):
             return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + torch.norm(z, p=2)/2
