@@ -206,11 +206,13 @@ class EBMModule(LightningModule):
             config, 
             base_model,
             operator,
-            sampling_algo
+            sampling_algo,
+            **kwargs
     ):
 
         super(EBMModule, self).__init__()
         
+        self.kwargs = kwargs
         self.config = config
         self.model = base_model
         self.operator = operator
@@ -227,21 +229,36 @@ class EBMModule(LightningModule):
         return imgs
 
     def get_latent_estimate(self, y):
-        def potential(z):
-            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum')
+        def mse_potential(z):
+            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + torch.norm(z, p=2)/2
         
+        def discriminator_weighted_potential(z):
+            discriminator = self.kwargs["discriminator"]
+            score = discriminator(self.model.decode(z))
+            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + torch.norm(z, p=2)/2 + score 
+        
+        def get_potential():
+            if self.config['estimator_params']['potential'] == "mse":
+                potential = mse_potential
+            elif self.config['estimator_params']['potential'] == "discriminator_weighted":
+                potential = discriminator_weighted_potential
+            return potential 
+
         def get_avg_estimator(z):
+            potential = get_potential()
             sampler = lambda z : self.sampling_algo(self.config, potential, z)
             samples = sampler(z)
             return reduce(samples, "nsamples batch latent_dim -> batch latent_dim", "mean")
         
         def get_last_estimator(z):
+            potential = get_potential()
             sampler = lambda z : self.sampling_algo(self.config, potential, z)
             samples = sampler(z)
             return samples[-1]
         
         def get_denoise_avg_estimator(z):
             z = get_avg_estimator(z)
+            potential = get_potential(z)
             return z - self.config["estimator_params"]["denoise_step_size"] * score_fn(potential, z)
 
         z = eval(f"self.get_{self.config['estimator_params']['initalisation']}_inital_latent_vector(y)")

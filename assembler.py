@@ -140,11 +140,17 @@ def make_vaes(config, dataset_name, mode):
 def make_energy_model(config): 
     model_name = config["base_model_params"]["model_name"]
     
-    vae = make_and_load_base_model(model_name)
+    model = make_and_load_base_model(model_name)
     A = make_operator(config)
     sampling_algo = make_estimator(config)
+    discriminator = None
 
-    ebm = EBMModule(config, vae, A, sampling_algo)
+    if config['estimator_params']['potential'] == "discriminator_weighted":
+        discriminator_name = config['estimator_params']['discriminator_base_model']
+        gan = make_and_load_base_model(discriminator_name)
+        discriminator = gan.model.model.discriminator
+
+    ebm = EBMModule(config, model, A, sampling_algo, discriminator=discriminator)
     return ebm 
 
 if __name__ == "__main__":

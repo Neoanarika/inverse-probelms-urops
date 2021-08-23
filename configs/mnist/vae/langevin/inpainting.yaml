@@ -21,6 +21,7 @@ estimator_params:
   step_size: 0.01
   mode: "avg"
   initalisation: "posterior"
+  potential: "mse"
 
 base_model_params:
   model_name: "mnist/vae/vanilla"
