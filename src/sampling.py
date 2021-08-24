@@ -92,7 +92,7 @@ def hmc(config, potential, Zi, device):
     
     return samples 
 
-def annealed_langevin_algorithm(config, potential, Zi, device):
+def annealed_langevin(config, potential, Zi, device):
     burn_in = config["estimator_params"]["burn_in"]
     L = config["estimator_params"]["L"]
     T = config["estimator_params"]["T"]
