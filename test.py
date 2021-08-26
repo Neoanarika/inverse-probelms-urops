@@ -61,6 +61,18 @@ class TestOperators(unittest.TestCase):
         x_tilde = ebm.operator(x)
 
         assert x_tilde.shape == (1, 200)
+    
+    def test_guassian_noise(self):
+        model_name = "mnist/vae/langevin/inpainting"
+        config = get_model_config(model_name)
+        config["operator_params"]["operator"] = "GuassianNoise"
+        config["operator_params"]["noise_level"] = 1
+        ebm = make_energy_model(config)
+        x = torch.randn(1, 1, 32, 32)
+        x_tilde = ebm.operator(x)
+
+        assert x_tilde.shape == (1,  1, 32, 32)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -65,6 +65,17 @@ class RandomOcclude(LightningModule):
     def to(self, device):
         self.A = self.A.to(device)
 
+class GuassianNoise(LightningModule):
+    def __init__(self, config):
+        super(GuassianNoise, self).__init__()
+
+        self.noise = config["operator_params"]["noise_level"]
+    
+    def forward(self, x):
+        x = x.to(self.device)
+        eps = torch.randn_like(x)
+        return x + self.noise*eps
+
 class CompressedSensing(LightningModule):
 
     def __init__(self, config):
