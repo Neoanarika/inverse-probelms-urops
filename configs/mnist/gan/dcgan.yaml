@@ -25,6 +25,10 @@ exp_params:
   latent_dim: 100
   batch_size: 256 # Better to have a square number
   checkpoint_path: "checkpoints"
+  image_shape: 
+    - 1
+    - 32
+    - 32
 
 trainer_params:
   gpus: 1

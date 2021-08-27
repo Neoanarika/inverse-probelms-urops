@@ -21,7 +21,21 @@ def get_config_base_model(fpath):
       assert "loss_params" in config
       assert "exp_params" in config
       assert "trainer_params" in config
+      
+      # Check if exp_params is valid
+      assert "model_name" in config["exp_params"]
+      assert "base_model" in config["exp_params"]
+      assert "dataset" in config["exp_params"]
+      assert "data_path" in config["exp_params"]
+      assert "checkpoint_path" in config["exp_params"]
+      assert "batch_size" in config["exp_params"]
+      assert "latent_dim" in config["exp_params"]
+      assert "image_shape" in config["exp_params"]
 
+      # Check if trainer_params is valid
+      assert "gpus" in config["trainer_params"]
+      assert "max_epochs" in config["trainer_params"]
+      
       return config
 
 def get_config_ebm(fpath):
@@ -36,9 +50,22 @@ def get_config_ebm(fpath):
       assert "operator_params" in config 
       assert "estimator_params" in config
       assert "base_model_params" in config
-
+    
       # Check exp params is valid 
       assert "dataset" in config["exp_params"]
+      assert "data_path" in config["exp_params"]
+      assert "checkpoint_path" in config["exp_params"]
+      assert "batch_size" in config["exp_params"]
+      assert "image_shape" in config["exp_params"]
+
+      # Check if base_model_params is valid
+      assert "model_name" in config["base_model_params"]
+
+      # Check if estimator_params is valid
+      assert "estimator" in config["estimator_params"]
+
+      # Check if operator_params is valid
+      assert "operator" in config["operator_params"]
       
       return config
 
