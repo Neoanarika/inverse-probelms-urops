@@ -1,6 +1,5 @@
 import torch 
 import unittest
-from torch import nn
 from models.mnist.gan import DCGANGenerator, DCGANDiscriminator
 from utils.config import get_config_base_model
 from assembler import make_energy_model, get_config, get_config_ebm
