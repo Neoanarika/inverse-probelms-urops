@@ -5,11 +5,11 @@ from src.sampling import score_fn
 from pytorch_lightning import LightningModule
 from utils.config import get_config_hash, get_config_base_model
 
-def load_model(self):
+def load_model(self, path="."):
     try:
         config = get_config_base_model(self.config['exp_params']['file_path'])
         hash = get_config_hash(config)
-        self.load_state_dict(torch.load(f"./{self.checkpoint_dir}/{hash}.ckpt"))
+        self.load_state_dict(torch.load(f"{path}/{self.checkpoint_dir}/{hash}.ckpt"))
     except  FileNotFoundError:
         print(f"Please train the model using python run.py -c {self.config['exp_params']['file_path']}")
     return self 
@@ -42,8 +42,8 @@ class BaseVAE(LightningModule):
         self.model.model = self.model.model.to(device)
         return self
     
-    def load_model(self):
-        self.model.load_model()
+    def load_model(self, path="."):
+        self.model.load_model(path=path)
     
     def forward(self):
         pass
@@ -71,8 +71,8 @@ class BaseGAN(LightningModule):
         self.model.model = self.model.model.to(device)
         return self
     
-    def load_model(self):
-        self.model.load_model()
+    def load_model(self, path="."):
+        self.model.load_model(path=path)
 
 class GANModule(LightningModule):
 
@@ -113,8 +113,8 @@ class GANModule(LightningModule):
 
         return result
     
-    def load_model(self):
-        self = load_model(self)
+    def load_model(self, path="."):
+        self = load_model(self, path=path)
 
 class VAEModule(LightningModule):
     """
@@ -176,8 +176,8 @@ class VAEModule(LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
-    def load_model(self):
-        self = load_model(self)
+    def load_model(self, path="."):
+        self = load_model(self, path=path)
 
 class EBMModule(LightningModule):
     """
@@ -277,3 +277,20 @@ class EBMModule(LightningModule):
         z = self.get_latent_estimate(y)
         imgs = self.model.decode(z)
         return z, imgs
+
+class AdaptiveEBM(LightningModule):
+
+    def __init__(self, config, ebm) -> None:
+        super(AdaptiveEBM, self).__init__()
+
+        self.config = config 
+        self.ebm = ebm 
+    
+    def estimate_variance(self, imgs):
+        ex = reduce(imgs, "b c h w -> c h w", "mean")
+        ex2 = reduce(imgs**2, "b c h w -> c h w", "mean")
+        return ex2 - ex**2
+    
+    def top_k_pixel(self, varmap):
+        var = reduce(varmap, "c h w -> h w", "mean")
+        

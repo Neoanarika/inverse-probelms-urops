@@ -43,28 +43,28 @@ def get_base_model(base_model_config, dataset, mode):
             model = BaseGAN(model)
     return model
 
-def get_config(get_config_fn, dataset, model, name):
-    if not os.path.isdir('configs'):
-         os.mkdir("./configs")
-    fname = f"./configs/{dataset}/{model}/{name}.yaml"
+def get_config(get_config_fn, dataset, model, name, path="."):
+    if not os.path.isdir(f'{path}/configs'):
+         os.mkdir(f"{path}/configs")
+    fname = f"{path}/configs/{dataset}/{model}/{name}.yaml"
     config = get_config_fn(fname)
     config["exp_params"]["file_path"] = fname
     return config
 
-def make_and_load_base_model(model_name, use_gpu=False):
+def make_and_load_base_model(model_name, use_gpu=False, path="."):
     dataset, model_type, name = model_name.split("/")
-    config = get_config(get_config_base_model, dataset, model_type, name)
+    config = get_config(get_config_base_model, dataset, model_type, name, path)
 
     model = get_base_model(config, dataset, "inference")
     if use_gpu: model = model.to("cuda")
 
-    model.load_model()
+    model.load_model(path=path)
     return model
 
-def make_and_load_base_models(model_names: list, use_gpu=False):
+def make_and_load_base_models(model_names: list, use_gpu=False, path="."):
   vaes = []
   for model_name in model_names:
-    vae = make_and_load_base_model(model_name, use_gpu)
+    vae = make_and_load_base_model(model_name, use_gpu, path)
     vaes.append(vae)
   return vaes 
 
@@ -137,17 +137,16 @@ def make_vaes(config, dataset_name, mode):
 
     return vae
 
-def make_energy_model(config): 
+def make_energy_model(config, path="."): 
     model_name = config["base_model_params"]["model_name"]
-    
-    model = make_and_load_base_model(model_name)
+    model = make_and_load_base_model(model_name, path=path)
     A = make_operator(config)
     sampling_algo = make_estimator(config)
     discriminator = None
 
     if config['estimator_params']['potential'] == "discriminator_weighted":
         discriminator_name = config['estimator_params']['discriminator_base_model']
-        gan = make_and_load_base_model(discriminator_name)
+        gan = make_and_load_base_model(discriminator_name, path=path)
         discriminator = gan.model.model.discriminator
 
     ebm = EBMModule(config, model, A, sampling_algo, discriminator=discriminator)

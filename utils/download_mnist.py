@@ -18,8 +18,8 @@ def mnist_dataloader_train(config):
     dm = DataLoader(mnist_train, batch_size=config["exp_params"]["batch_size"])
     return dm
 
-def mnist_dataloader_test(config):
-    mnist_test = MNIST(f'{config["exp_params"]["data_path"]}', train=False, download=False,
+def mnist_dataloader_test(config, path=""):
+    mnist_test = MNIST(f'{path}/{config["exp_params"]["data_path"]}', train=False, download=False,
                          transform=transforms.Compose([transforms.ToTensor(),
                                                        transforms.Resize((32,32))]))
     dm = DataLoader(mnist_test, batch_size=config["exp_params"]["batch_size"])
