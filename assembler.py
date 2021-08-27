@@ -37,7 +37,6 @@ def get_base_model(base_model_config, dataset, mode):
         if is_mode_inference(mode):
             model = BaseVAE(model)
     elif model_type == "gan":
-        print("make_gans")
         model = make_gans(base_model_config, dataset, mode)
         if is_mode_inference(mode):
             model = BaseGAN(model)
