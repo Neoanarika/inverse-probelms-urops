@@ -45,6 +45,24 @@ class TestGAN(unittest.TestCase):
         pred = disc(img)
         assert pred.shape == (1, )
 
+class TestSampler(unittest.TestCase):
+
+    def test_langevin(self):
+        config = get_model_config("mnist/vae/langevin/inpainting")
+        ebm = make_energy_model(config)
+        x_tilde = torch.randn(1, 1, 32, 32)
+        x_hat = ebm(x_tilde)
+        assert x_hat.shape == (1,  1, 32, 32)
+    
+    def test_map(self):
+        config = get_model_config("mnist/vae/langevin/inpainting")
+        config["estimator_params"]["estimator"] = "map"
+        config["estimator_params"]["n"] = 15
+        ebm = make_energy_model(config)
+        x_tilde = torch.randn(1, 1, 32, 32)
+        x_hat = ebm(x_tilde)
+        assert x_hat.shape == (1,  1, 32, 32)
+
 class TestOperators(unittest.TestCase):
 
     def test_random_occlude(self):
