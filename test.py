@@ -1,5 +1,6 @@
 import torch 
 import unittest
+from models.mnist.vae import ConvEncoder, ConvDecoder
 from models.mnist.gan import DCGANGenerator, DCGANDiscriminator
 from utils.config import get_config_base_model
 from assembler import make_energy_model, get_config, get_config_ebm
@@ -11,6 +12,23 @@ def get_model_config(model_name):
     return config
 
 # Unittest
+class TestVAE(unittest.TestCase):
+
+    def test_conv_encoder(self):
+        config = get_config_base_model("./configs/mnist/vae/vanilla.yaml")
+        enc = ConvEncoder(config)
+        img = torch.randn(1, 1, 32, 32)
+        mu, log_var = enc(img)
+        assert mu.shape == (1, config["exp_params"]["latent_dim"])
+        assert log_var.shape == (1, config["exp_params"]["latent_dim"])
+
+    def test_conv_decoder(self):
+        config = get_config_base_model("./configs/mnist/vae/vanilla.yaml")
+        dec = ConvDecoder(config)
+        noise = torch.randn(1, config["exp_params"]["latent_dim"])
+        img = dec(noise)
+        assert img.shape == (1, 1, 32, 32)
+
 class TestGAN(unittest.TestCase):
 
     def test_dcgan_generator(self):
@@ -24,7 +42,8 @@ class TestGAN(unittest.TestCase):
         config = get_config_base_model("./configs/mnist/gan/dcgan.yaml")
         disc = DCGANDiscriminator(config)
         img = torch.randn(1, 1, 32, 32)
-        disc(img)
+        pred = disc(img)
+        assert pred.shape == (1, )
 
 class TestOperators(unittest.TestCase):
 
