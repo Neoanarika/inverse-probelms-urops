@@ -241,7 +241,7 @@ class EBMModule(LightningModule):
         
         def get_denoise_avg_estimator(z):
             z = get_avg_estimator(z)
-            potential = get_potential(z)
+            potential = get_potential()
             return z - self.config["estimator_params"]["denoise_step_size"] * score_fn(potential, z)
 
         z = eval(f"self.get_{self.config['estimator_params']['initalisation']}_inital_latent_vector(y)")
@@ -293,4 +293,3 @@ class AdaptiveEBM(LightningModule):
     
     def top_k_pixel(self, varmap):
         var = reduce(varmap, "c h w -> h w", "mean")
-        
