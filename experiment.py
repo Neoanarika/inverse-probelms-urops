@@ -244,8 +244,7 @@ class EBMModule(LightningModule):
         
         def discriminator_weighted_potential(z):
             discriminator = self.kwargs["discriminator"]
-            out = discriminator(self.model.decode(z))
-            score = torch.log(out/(1-out))
+            score = -discriminator.logit(self.model.decode(z))
             return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + self.config['estimator_params']['lambda']*(torch.norm(z, p=2)/2 + score)
         
         if self.config['estimator_params']['potential'] == "mse":

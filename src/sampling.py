@@ -32,7 +32,7 @@ def langevin(config, potential, Zi, device):
     for idx in range(n_samples + burn_in):
         grad = score_fn(potential, Zi)
         Zi = Zi.detach() - step_size * grad  + \
-        np.sqrt(2 * step_size) * torch.randn_like(Zi)
+        np.sqrt(step_size) * torch.randn_like(Zi)
         if idx > burn_in:
             samples[idx-burn_in] = Zi
     return samples 
@@ -50,7 +50,7 @@ def mala(config, potential, Zi, device):
 
     for idx in range(n_samples + burn_in):
         grad = score_fn(potential, Zi)
-        Znew = Zi.detach() - step * grad + np.sqrt(2 * step) * torch.randn(1, 2) 
+        Znew = Zi.detach() - step * grad + np.sqrt(step) * torch.randn(1, 2) 
         u = np.random.uniform()
         alpha = min(1, torch.exp(potential(Zi-potential(Znew)\
                                  + log_Q(Zi, Znew, potential, step) - log_Q(Znew, Zi, potential, step))))
