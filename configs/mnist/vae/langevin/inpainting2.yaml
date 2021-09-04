@@ -15,7 +15,7 @@ operator_params:
   size: 13
 
 estimator_params:
-  estimator: "map"
+  estimator: "langevin"
   burn_in: 0
   n_samples: 15
   step_size: 0.01
@@ -24,4 +24,4 @@ estimator_params:
   potential: "mse"
 
 base_model_params:
-  model_name: "mnist/vae/vanilla"
+  model_name: "mnist/vae/vanilla2"
