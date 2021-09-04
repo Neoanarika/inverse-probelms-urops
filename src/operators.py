@@ -74,7 +74,7 @@ class GuassianNoise(LightningModule):
     def forward(self, x):
         x = x.to(self.device)
         eps = torch.randn_like(x)
-        return x + self.noise*eps
+        return x + np.sqrt(self.noise)*eps
 
 class CompressedSensing(LightningModule):
 
@@ -83,11 +83,10 @@ class CompressedSensing(LightningModule):
 
         num = config["operator_params"]["num_measurements"] 
         image_shape = config["exp_params"]["image_shape"]
-        self.A = nn.Linear(image_shape[-1]*image_shape[-2], num, bias=False, device=self.device)
-        torch.nn.init.normal_(self.A.weight, 0.0, 1/num)
+        self.A = np.sqrt(1/num)*torch.randn((image_shape[-1]*image_shape[-2], num), device=self.device)
 
     def forward(self, x):
         x = x.to(self.device)
         self.A = self.A.to(self.device)
         x = rearrange(x, "b c h w -> b (c h w)")
-        return self.A(x)
+        return x @ self.A
