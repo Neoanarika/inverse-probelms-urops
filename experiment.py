@@ -212,41 +212,48 @@ class EBMModule(LightningModule):
         self.kwargs["discriminator"] = self.kwargs["discriminator"].to(self.device)
     
     def get_latent_estimate(self, y):
-        def mse_potential(z):
-            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + torch.norm(z, p=2)/2
-        
-        def discriminator_weighted_potential(z):
-            discriminator = self.kwargs["discriminator"]
-            score = discriminator(self.model.decode(z))
-            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + torch.norm(z, p=2)/2 + score 
-        
-        def get_potential():
-            if self.config['estimator_params']['potential'] == "mse":
-                potential = mse_potential
-            elif self.config['estimator_params']['potential'] == "discriminator_weighted":
-                potential = discriminator_weighted_potential
-            return potential 
-
         def get_avg_estimator(z):
-            potential = get_potential()
+            potential = self.energy_fn(y)
             sampler = lambda z : self.sampling_algo(self.config, potential, z, device=self.device)
             samples = sampler(z)
             return reduce(samples, "nsamples batch latent_dim -> batch latent_dim", "mean")
         
         def get_last_estimator(z):
-            potential = get_potential()
+            potential = self.energy_fn(y)
             sampler = lambda z : self.sampling_algo(self.config, potential, z, device=self.device)
             samples = sampler(z)
             return samples[-1]
         
         def get_denoise_avg_estimator(z):
             z = get_avg_estimator(z)
-            potential = get_potential()
+            potential = self.energy_fn(y)
+            return z - self.config["estimator_params"]["denoise_step_size"] * score_fn(potential, z)
+        
+        def get_denoise_last_estimator(z):
+            z = get_last_estimator(z)
+            potential = self.energy_fn(y)
             return z - self.config["estimator_params"]["denoise_step_size"] * score_fn(potential, z)
 
         z = eval(f"self.get_{self.config['estimator_params']['initalisation']}_inital_latent_vector(y)")
         z = eval(f"get_{self.config['estimator_params']['mode']}_estimator(z)")
         return z
+    
+    def energy_fn(self, y):
+        def mse_potential(z):
+            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + torch.norm(z, p=2)/2
+        
+        def discriminator_weighted_potential(z):
+            discriminator = self.kwargs["discriminator"]
+            out = discriminator(self.model.decode(z))
+            score = torch.log(out/(1-out))
+            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + self.config['estimator_params']['lambda']*(torch.norm(z, p=2)/2 + score)
+        
+        if self.config['estimator_params']['potential'] == "mse":
+            potential = mse_potential
+        elif self.config['estimator_params']['potential'] == "discriminator_weighted":
+            potential = discriminator_weighted_potential
+        
+        return potential
 
     def get_random_inital_latent_vector(self, x):
         z = self.model.get_random_latent(x.shape[0])
