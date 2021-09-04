@@ -5,6 +5,10 @@ from torch import nn
 from einops.einops import rearrange
 from torch.nn import functional as F
 
+def get_coord(sample, imgshape):
+  y = sample %imgshape[2]
+  x = (sample-y)//imgshape[2]
+  return x,y 
 
 class CenterOcclude(LightningModule):
 
@@ -33,11 +37,12 @@ class CenterOcclude(LightningModule):
     
     def to(self, device):
         self.A = self.A.to(device)
-
-def get_coord(sample, imgshape):
-  y = sample %imgshape[2]
-  x = (sample-y)//imgshape[2]
-  return x,y 
+    
+    def get_new_A_based_on_var(self, new_points):
+        A = torch.clone(self.A)
+        for x, y in new_points:
+            A[:, : , x, y] = 1 
+        return A
 
 class RandomOcclude(LightningModule):
 

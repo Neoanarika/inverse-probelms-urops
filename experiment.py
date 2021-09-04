@@ -1,5 +1,5 @@
 import torch
-from einops import reduce
+from einops import reduce, rearrange
 from torch.nn import functional as F
 from src.sampling import score_fn
 from pytorch_lightning import LightningModule
@@ -287,9 +287,27 @@ class AdaptiveEBM(LightningModule):
         self.ebm = ebm 
     
     def estimate_variance(self, imgs):
-        ex = reduce(imgs, "b c h w -> c h w", "mean")
-        ex2 = reduce(imgs**2, "b c h w -> c h w", "mean")
+        ex = reduce(imgs, "c h w -> h w", "mean")
+        ex2 = reduce(imgs**2, "c h w -> h w", "mean")
         return ex2 - ex**2
     
-    def top_k_pixel(self, varmap):
-        var = reduce(varmap, "c h w -> h w", "mean")
+    def top_k_pixel(self, varmap, topk=5):
+        var = rearrange(varmap, "h w -> (h w)")
+        val, ind = torch.topk(var, topk)
+        return list(map(self.get_coord, ind)) 
+    
+    def get_coord(self, sample):
+        imgshape = self.config["exp_params"]["image_shape"]
+        y = int(sample %imgshape[2])
+        x = int((sample-y)//imgshape[2])
+        return x,y 
+    
+    def adaptive_sample(self, imgs):
+        var = self.estimate_variance(imgs)
+        var = rearrange(((1-self.ebm.operator.A.cpu())*var).detach(), "b c h w -> (b c h) w")
+        ri = self.top_k_pixel(var, topk=10)
+        A = self.ebm.operator.get_new_A_based_on_var(ri)
+        return A
+    
+    def update_operator(self, A):
+        self.ebm.operator.A = A
