@@ -83,7 +83,10 @@ class CompressedSensing(LightningModule):
 
         num = config["operator_params"]["num_measurements"] 
         image_shape = config["exp_params"]["image_shape"]
-        self.A = np.sqrt(1/num)*torch.randn((image_shape[-1]*image_shape[-2], num), device=self.device)
+        if num == 0:
+            self.A = torch.zeros((image_shape[-1]*image_shape[-2], num), device=self.device)
+        else:
+            self.A = np.sqrt(1/num)*torch.randn((image_shape[-1]*image_shape[-2], num), device=self.device)
 
     def forward(self, x):
         x = x.to(self.device)
