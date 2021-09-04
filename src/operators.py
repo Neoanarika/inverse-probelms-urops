@@ -17,6 +17,7 @@ class CenterOcclude(LightningModule):
     
     def forward(self, x):
         x = x.to(self.device)
+        self.A = self.A.to(self.device)
         return torch.mul(self.A, x)
     
     def occlude(self, size, image_shape):
