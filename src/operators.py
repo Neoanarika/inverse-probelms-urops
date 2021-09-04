@@ -35,9 +35,6 @@ class CenterOcclude(LightningModule):
             A = F.pad(A, (pad_size_x, pad_size_x, pad_size_y, pad_size_y), "constant", 1)
         return A
     
-    def to(self, device):
-        self.A = self.A.to(device)
-    
     def get_new_A_based_on_var(self, new_points):
         A = torch.clone(self.A)
         for x, y in new_points:
@@ -68,9 +65,6 @@ class RandomOcclude(LightningModule):
             A[:, :, x, y] = 1
         return A
     
-    def to(self, device):
-        self.A = self.A.to(device)
-
 class GuassianNoise(LightningModule):
     def __init__(self, config):
         super(GuassianNoise, self).__init__()
@@ -94,8 +88,6 @@ class CompressedSensing(LightningModule):
 
     def forward(self, x):
         x = x.to(self.device)
+        self.A = self.A.to(self.device)
         x = rearrange(x, "b c h w -> b (c h w)")
         return self.A(x)
-    
-    def to(self, device):
-        self.A = self.A.to(device)
