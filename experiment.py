@@ -2,6 +2,7 @@ import torch
 from einops import reduce, rearrange
 from torch.nn import functional as F
 from src.sampling import score_fn
+from torch import optim
 from pytorch_lightning import LightningModule
 from utils.config import get_config_hash, get_config_base_model
 
@@ -151,7 +152,7 @@ class VAEModule(LightningModule):
         return self.model.decoder(z)
 
     def get_samples(self, num):
-        return self.model.get_samples(num, self.device)
+        return self.model.get_samples(num)
 
     def step(self, batch, batch_idx):
         x, y = batch
@@ -240,12 +241,12 @@ class EBMModule(LightningModule):
     
     def energy_fn(self, y):
         def mse_potential(z):
-            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + torch.norm(z, p=2)/2
+            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + self.config['estimator_params']['lambda']*torch.norm(z, p=2)/2
         
         def discriminator_weighted_potential(z):
             discriminator = self.kwargs["discriminator"]
             score = -discriminator.logit(self.model.decode(z))
-            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + self.config['estimator_params']['lambda']*(torch.norm(z, p=2)/2 + score)
+            return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + self.config['estimator_params']['lambda']*torch.norm(z, p=2)/2 + self.config['estimator_params']['lambda_score']*score
         
         if self.config['estimator_params']['potential'] == "mse":
             potential = mse_potential
@@ -283,6 +284,18 @@ class EBMModule(LightningModule):
         z = self.get_latent_estimate(y)
         imgs = self.model.decode(z)
         return z, imgs
+    
+    def finetune_discrimiantor(self):
+        discriminator = self.kwargs["discriminator"]
+        optimizer = optim.SGD(discriminator.parameters(), lr=0.001, momentum=0.9)
+        n = self.config["estimator_params"]["num_steps_finetune"]
+        num = self.config["estimator_params"]["num_samples_for_finetune"]
+        for _ in range(n):
+            optimizer.zero_grad()
+            z = self.model.model.get_samples(num)
+            loss = torch.mean(discriminator.logit(z))
+            loss.backward()
+            optimizer.step()
 
 class AdaptiveEBM(LightningModule):
 

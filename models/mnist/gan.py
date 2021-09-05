@@ -1,7 +1,6 @@
 import torch
 from torch import nn, Tensor
 from utils.config import get_config_base_model
-import torch.nn.functional as F
 
 class DCGANGenerator(nn.Module):
 
@@ -101,7 +100,7 @@ class DCGANDiscriminator(nn.Module):
         return disc_block
 
     def forward(self, x: Tensor) -> Tensor:
-        return F.sigmoid(self.disc(x)).view(-1, 1).squeeze(1)
+        return torch.sigmoid(self.disc(x)).view(-1, 1).squeeze(1)
     
     def logit(self, x: Tensor) -> Tensor:
         return self.disc(x).view(-1, 1).squeeze(1)
