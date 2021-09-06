@@ -84,6 +84,11 @@ class GAN(LightningModule):
 
         return gen_loss
 
+    def get_samples(self, num):
+        noise = self.get_noise(num)
+        fake = self(noise)
+        return fake
+        
     def get_fake_pred(self, real: Tensor) -> Tensor:
         batch_size = len(real)
         noise = self.get_noise(batch_size)
