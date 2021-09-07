@@ -9,7 +9,10 @@ def show(config):
             for key, val in config[item].items():
                 print(f"    {key}: {val}")
 
-
+def save(config, fname):
+    with open(fname, 'w') as outfile:
+        yaml.dump(config, outfile, default_flow_style=False)
+        
 def get_config_base_model(fpath):
    with open(fpath, 'r') as file:
       try:
