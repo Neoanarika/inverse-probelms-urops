@@ -9,6 +9,7 @@ import numpy as np
 def score_fn(potential, Zi):
     Zi.requires_grad_()
     u = potential(Zi).mean()
+    #print(u)
     grad = torch.autograd.grad(u, Zi)[0]
     return grad 
 
@@ -27,14 +28,18 @@ def langevin(config, potential, Zi, device):
     burn_in = config["estimator_params"]["burn_in"]
     n_samples = config["estimator_params"]["n_samples"]
     step_size = config["estimator_params"]["step_size"]
+    noise_factor = config["estimator_params"]["noise_factor"]
+    # dg= config["estimator_params"]["discrimiantor"]
+    # on = config["estimator_params"]["disc_on"]
     samples = torch.zeros((n_samples, ) + Zi.shape, device=device)
 
     for idx in range(n_samples + burn_in):
         grad = score_fn(potential, Zi)
         Zi = Zi.detach() - step_size * grad  + \
-        np.sqrt(step_size) * torch.randn_like(Zi)
+        np.sqrt(2*noise_factor*step_size) * torch.randn_like(Zi)
+
         if idx > burn_in:
-            samples[idx-burn_in] = Zi
+            samples[idx-burn_in] = Zi.detach()
     return samples 
 
 def log_Q(z_prime, z, potential, step):
@@ -50,7 +55,7 @@ def mala(config, potential, Zi, device):
 
     for idx in range(n_samples + burn_in):
         grad = score_fn(potential, Zi)
-        Znew = Zi.detach() - step * grad + np.sqrt(step) * torch.randn(1, 2) 
+        Znew = Zi.detach() - step * grad + np.sqrt(step) * torch.randn_like(Zi)
         u = np.random.uniform()
         alpha = min(1, torch.exp(potential(Zi-potential(Znew)\
                                  + log_Q(Zi, Znew, potential, step) - log_Q(Znew, Zi, potential, step))))
@@ -106,7 +111,7 @@ def annealed_langevin(config, potential, Zi, device):
       alpha_i  = eps*var[i]/var[-1]
       for _ in range(T):
         grad = score_fn(potential, Zi)
-        Zi = Zi.detach() - (alpha_i/2) * grad + np.sqrt(alpha_i) * torch.randn(1, 2)
+        Zi = Zi.detach() - (alpha_i/2) * grad + np.sqrt(alpha_i) * torch.randn_like(Zi)
         if idx > burn_in:
             samples[idx-burn_in] = Zi
         idx+=1
