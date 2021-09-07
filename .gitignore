@@ -11,3 +11,4 @@ lightning_logs/
 __pycache__/*.cpython-38.pyc
 models/celeba/__pycache__/*.cpython-37.pyc
 .ipynb_checkpoints
+notebooks/non_gan_discriminator.ckpt
