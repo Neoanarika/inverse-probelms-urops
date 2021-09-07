@@ -93,6 +93,9 @@ class GANModule(LightningModule):
     def forward(self, z):
         return self.model(z)
     
+    def get_samples(self, num):
+        return self.model.get_samples(num)
+    
     def configure_optimizers(self):
         lr = self.lr
         betas = (self.beta1, 0.999)
@@ -230,6 +233,20 @@ class EBMModule(LightningModule):
             potential = self.energy_fn(y)
             return z - self.config["estimator_params"]["denoise_step_size"] * score_fn(potential, z)
         
+        def get_importance_avg_estimator(z):
+            dg= self.config["estimator_params"]["discrimiantor"]
+            potential = self.energy_fn(y)
+            sampler = lambda z : self.sampling_algo(self.config, potential, z, device=self.device)
+            samples = sampler(z)
+            sum_ = 0
+            for i, sample in enumerate(samples):
+                sample = sample.detach()
+                x = dg(sample).detach()
+                samples[i]  = torch.diag(x) @ samples[i].detach()
+                sum_ += x
+
+            return torch.diag(1/sum_) @ reduce(samples, "nsamples batch latent_dim -> batch latent_dim", "sum")
+        
         def get_denoise_last_estimator(z):
             z = get_last_estimator(z)
             potential = self.energy_fn(y)
@@ -241,11 +258,16 @@ class EBMModule(LightningModule):
     
     def energy_fn(self, y):
         def mse_potential(z):
+            #print(f"mse: {F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum')}")
+            #print(f"norm : {torch.norm(z, p=2)/2 }")
             return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + self.config['estimator_params']['lambda']*torch.norm(z, p=2)/2
         
         def discriminator_weighted_potential(z):
             discriminator = self.kwargs["discriminator"]
-            score = -discriminator.logit(self.model.decode(z))
+            score = -torch.sum(discriminator.logit(self.model.decode(z)))
+            #print(f"score: {score}")
+            #print(f"norm : {torch.norm(z, p=2)/2 }")
+            #print(f"mse: {F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum')}")
             return F.mse_loss(self.operator(self.model.decode(z)), y, reduction='sum') + self.config['estimator_params']['lambda']*torch.norm(z, p=2)/2 + self.config['estimator_params']['lambda_score']*score
         
         if self.config['estimator_params']['potential'] == "mse":
@@ -265,7 +287,7 @@ class EBMModule(LightningModule):
     
     def get_map_estimate_inital_latent_vector(self, x):
         def potential(z):
-            return F.mse_loss(self.operator(self.model.decode(z)), x, reduction='sum')
+            return F.mse_loss(self.operator(self.model.decode(z)), x, reduction='sum') + 10*torch.norm(z, p=2)/2 
         z = self.get_random_inital_latent_vector(x)
         n = self.config["estimator_params"]["num_steps_map_initaliser"]
         step_size = self.config["estimator_params"]["step_size_map_initaliser"]
