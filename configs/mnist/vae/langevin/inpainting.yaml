@@ -21,6 +21,7 @@ estimator_params:
   step_size: 0.01
   lambda: 1
   mode: "avg"
+  noise_factor: 0.5
   initalisation: "posterior"
   potential: "mse"
 
