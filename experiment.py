@@ -332,6 +332,10 @@ class AdaptiveEBM(LightningModule):
         ex2 = reduce(imgs**2, "c h w -> h w", "mean")
         return ex2 - ex**2
     
+    def random_estimate(self, imgs):
+        ex = reduce(imgs, "c h w -> h w", "mean")
+        return torch.randn_like(ex)
+
     def top_k_pixel(self, varmap, topk=5):
         var = rearrange(varmap, "h w -> (h w)")
         val, ind = torch.topk(var, topk)
@@ -345,6 +349,13 @@ class AdaptiveEBM(LightningModule):
     
     def adaptive_sample(self, imgs):
         var = self.estimate_variance(imgs)
+        var = rearrange(((1-self.ebm.operator.A.cpu())*var).detach(), "b c h w -> (b c h) w")
+        ri = self.top_k_pixel(var, topk=10)
+        A = self.ebm.operator.get_new_A_based_on_var(ri)
+        return A
+    
+    def non_adaptive_sample(self, imgs):
+        var = self.random_estimate(imgs)
         var = rearrange(((1-self.ebm.operator.A.cpu())*var).detach(), "b c h w -> (b c h) w")
         ri = self.top_k_pixel(var, topk=10)
         A = self.ebm.operator.get_new_A_based_on_var(ri)
