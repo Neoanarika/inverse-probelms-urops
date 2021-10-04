@@ -397,24 +397,27 @@ class OptiEBM(LightningModule):
         return x,y 
     
     def ucb_sample(self, imgs, k=0.1, num_pixels_per_samples=10):
-        mean = self.estimate_variance(imgs)
+        mean = self.estimate_mean(imgs)
         var = self.estimate_variance(imgs)
         ucb = mean+k*var
+        ucb = rearrange(((1-self.ebm.operator.A.cpu())*ucb).detach(), "b c h w -> (b c h) w")
         ri = self.top_k_pixel(ucb, topk=num_pixels_per_samples)
         A = self.ebm.operator.get_new_A_based_on_var(ri)
-        return A
+        return ri, A
     
     def random_sample(self, imgs, num_pixels_per_samples=10):
         var = self.random_estimate(imgs)
+        var = rearrange(((1-self.ebm.operator.A.cpu())*var).detach(), "b c h w -> (b c h) w")
         ri = self.top_k_pixel(var, topk=num_pixels_per_samples)
         A = self.ebm.operator.get_new_A_based_on_var(ri)
-        return A
+        return ri, A
     
     def thomospon_sample(self, imgs, num_pixels_per_samples=10):
         mean = self.estimate_mean(imgs)
+        mean = rearrange(((1-self.ebm.operator.A.cpu())*mean).detach(), "b c h w -> (b c h) w")
         ri = self.top_k_pixel(mean, topk=num_pixels_per_samples)
         A = self.ebm.operator.get_new_A_based_on_var(ri)
-        return A
+        return ri, A
     
     def update_operator(self, A):
         self.ebm.operator.A = A
