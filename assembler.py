@@ -113,7 +113,7 @@ def make_gans(config, dataset_name, mode):
 def make_vaes(config, dataset_name, mode):
     # Get model components 
     base_model = config["exp_params"]["model_name"]
-    if dataset_name == "modified_mnist":
+    if "mnist" in dataset_name:
         dataset_name = "mnist"
     components = importlib.import_module(f"models.{dataset_name}.vae")
 

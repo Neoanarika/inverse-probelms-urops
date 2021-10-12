@@ -405,6 +405,12 @@ class OptiEBM(LightningModule):
         A = self.ebm.operator.get_new_A_based_on_var(ri)
         return ri, A
     
+    def random_pick_sample(self, img, topk):
+        x = rearrange(img, "b c h w -> (b c h) w")
+        ri = self.top_k_pixel(x, topk)
+        A = self.ebm.operator.get_new_A_based_on_var(ri)
+        return ri, A
+    
     def random_sample(self, imgs, num_pixels_per_samples=10):
         var = self.random_estimate(imgs)
         var = rearrange(((1-self.ebm.operator.A.cpu())*var).detach(), "b c h w -> (b c h) w")
