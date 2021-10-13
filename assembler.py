@@ -90,6 +90,8 @@ def make_ebm_model(model_name):
 def make_gans(config, dataset_name, mode):
     # Get model components 
     base_model = config["exp_params"]["model_name"]
+    if "mnist" in dataset_name:
+        dataset_name = "mnist"
     components = importlib.import_module(f"models.{dataset_name}.gan")
     
     # Get component constructors
