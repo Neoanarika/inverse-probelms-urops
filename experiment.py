@@ -148,6 +148,7 @@ class PixelCNNModule(LightningModule):
         return torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
     def load_model(self, path):
+        print(path)
         try:
             self.load_state_dict(torch.load(path))
 
@@ -242,14 +243,16 @@ class VQVAEModule(LightningModule):
 
     def load_model_vq_vae(self, path=""):
         try:
-            self.load_state_dict(torch.load(f"{path}{self.model.name}_celeba_conv.ckpt"))
+            check_path = self.config["exp_params"]["checkpoint_path"]
+            self.load_state_dict(torch.load(f"{path}/{check_path}/{self.model.name}_celeba_conv.ckpt"))
         except FileNotFoundError:
             print(f"Please train the model using python run.py -c ./configs/{self.model.name}.yaml")
     
     def load_model_pixel_cnn(self, path=""):
         try:
+            check_path = self.config["exp_params"]["checkpoint_path"]
             fpath = self.config["pixel_params"]["save_path"]
-            self.pixel_cnn.load_state_dict(torch.load(f"{path}{fpath}"))
+            self.pixel_cnn.load_state_dict(torch.load(f"{path}/{check_path}/{fpath}"))
         except FileNotFoundError:
             print(f"Please train the model using python run_pixel.py -c ./configs/{self.model.name}.yaml")
 
@@ -403,7 +406,7 @@ class EBMModule(LightningModule):
             potential = self.energy_fn(y)
             sampler = lambda z : self.sampling_algo(self.config, potential, z, device=self.device)
             samples = sampler(z)
-            return reduce(samples, "nsamples batch latent_dim -> batch latent_dim", "mean")
+            return torch.mean(samples,axis=0)
         
         def get_last_estimator(z):
             potential = self.energy_fn(y)

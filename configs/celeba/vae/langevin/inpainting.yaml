@@ -6,9 +6,9 @@ exp_params:
   # dataset information
   batch_size: 1 # Better to have a square number
   image_shape: 
-    - 1
-    - 32
-    - 32
+    - 3
+    - 64
+    - 64
 
 operator_params:
   operator: "CenterOcclude"
