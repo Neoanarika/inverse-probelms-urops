@@ -2,8 +2,9 @@ import os
 import unittest
 import importlib
 from functools import partial
+from models.celeba.vq_vae import VQVAE, Encoder, Decoder, loss
 from utils.config import get_config_base_model, get_config_ebm
-from experiment import GANModule, VAEModule, EBMModule, BaseVAE, BaseGAN
+from experiment import GANModule, VAEModule, EBMModule, VQVAEModule, BaseVAE, BaseGAN
 
 # Helper functions
 def is_mode_training(mode):
@@ -36,10 +37,16 @@ def get_base_model(base_model_config, dataset, mode):
         model = make_vaes(base_model_config, dataset, mode)
         if is_mode_inference(mode):
             model = BaseVAE(model)
+    elif model_type == "vqvae":
+        model = make_vq_vaes(base_model_config, dataset, mode)
+        if is_mode_inference(mode):
+            model = BaseVAE(model)
     elif model_type == "gan":
         model = make_gans(base_model_config, dataset, mode)
         if is_mode_inference(mode):
             model = BaseGAN(model)
+    else:
+        raise Exception("Base model not found")
     return model
 
 def get_config(get_config_fn, dataset, model, name, path="."):
@@ -86,6 +93,13 @@ def make_ebm_model(model_name):
     config = get_config(get_config_ebm, dataset, model, name)
     ebm = make_energy_model(config)
     return ebm
+
+def make_vq_vaes(config, dataset_name, mode):
+    vae_name = config["exp_params"]["model_name"]
+
+    vae = VQVAE(vae_name, loss, Encoder(**config["encoder_params"]), Decoder(**config["decoder_params"]), config["vq_params"])
+    vae = VQVAEModule(vae, config)
+    return vae
 
 def make_gans(config, dataset_name, mode):
     # Get model components 

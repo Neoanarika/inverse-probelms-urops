@@ -17,7 +17,7 @@ operator_params:
 estimator_params:
   estimator: "langevin"
   burn_in: 0
-  n_samples: 15
+  n_samples: 120
   step_size: 0.01
   lambda: 1
   mode: "avg"

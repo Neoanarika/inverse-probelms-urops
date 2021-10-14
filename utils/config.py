@@ -18,7 +18,7 @@ def get_config_base_model(fpath):
       try:
           config = yaml.safe_load(file)
       except yaml.YAMLError as exc:
-          print(exc)
+          raise Exception(exc)
       
       # Check if config is valid
       assert "loss_params" in config

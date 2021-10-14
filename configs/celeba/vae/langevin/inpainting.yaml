@@ -26,4 +26,4 @@ estimator_params:
   potential: "mse"
 
 base_model_params:
-  model_name: "mnist/vae/vqvae"
+  model_name: "celeba/vae/vqvae"

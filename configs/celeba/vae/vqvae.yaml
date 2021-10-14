@@ -3,10 +3,11 @@ encoder_params:
   hidden_dims: null
   latent_dim: 64
 
+
 decoder_params:
   hidden_dims: null
   latent_dim: 64
-
+  
 loss_params:
   kl_coeff: null # Placeholder not actually used
 
@@ -29,11 +30,18 @@ exp_params:
   model_name: 'vq_vae'
   dataset: celeba
   data_path: "kaggle"
+  base_model: "vqvae"
+  latent_dim: 64
+  checkpoint_path: "checkpoints"
   img_size: 64
   crop_size: 128
   batch_size: 256 # Better to have a square number
   LR: 0.001
   template: "vq vae"
+  image_shape: 
+    - 3
+    - 64
+    - 64
 
 trainer_params:
   gpus: 1
