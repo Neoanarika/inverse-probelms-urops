@@ -15,7 +15,10 @@ parser.add_argument('--model',  '-c',
 
 args = parser.parse_args()
 config = get_config_base_model(args.filename)
-vae = get_base_model(config, "mnist", "training")
+dataset = config["exp_params"]["dataset"]
+if "mnist" in dataset:
+        dataset = "mnist"
+vae = get_base_model(config, dataset, "training")
 
 # Load data
 dm = dataloader(config)
