@@ -26,4 +26,4 @@ estimator_params:
   potential: "mse"
 
 base_model_params:
-  model_name: "multi_mnist/vae/vanilla"
+  model_name: "multi_two_mnist/vae/vanilla"
