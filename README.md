@@ -1,4 +1,4 @@
-# discriminator-weighted-sampling
+# Using Deep Generative Priors For Inverse ProblemsAnd Bayesian Optimisation
 
 There is a [wiki](https://boiled-mat-c58.notion.site/Discriminator-Weighted-Sampling-Wiki-8cbfa778c79345f69352a0fb94bb6f4f) over here for more details. 
 
