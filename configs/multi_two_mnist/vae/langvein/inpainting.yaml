@@ -1,0 +1,29 @@
+exp_params:
+  # basic info
+  dataset: "multi_two_mnist"
+  data_path: "data"
+  checkpoint_path: "checkpoints"
+  # dataset information
+  batch_size: 1 # Better to have a square number
+  image_shape: 
+    - 1
+    - 32
+    - 32
+
+operator_params:
+  operator: "CenterOcclude"
+  size: 13
+
+estimator_params:
+  estimator: "langevin"
+  burn_in: 0
+  n_samples: 15
+  step_size: 0.01
+  lambda: 1
+  mode: "avg"
+  noise_factor: 0.5
+  initalisation: "posterior"
+  potential: "mse"
+
+base_model_params:
+  model_name: "multi_mnist/vae/vanilla"
